@@ -74,7 +74,7 @@ def extract_packet(sock):
         #ethertypes:
         #numbers        name            decimal
         #0800           IPv4            2048
-        #0806           ARP             2054
+        #0806           ARP                     2054
         #86DD           IPv6            34525
         #append list to listen in on other protocols
         #if eth_protocol == 2048:
