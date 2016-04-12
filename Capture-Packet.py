@@ -86,7 +86,7 @@ def extract_packet(sock):
                 IPv6(packet)
 
 		
-<<<<<<< HEAD
+
 def	IPv4(packet, eth_length):
 	#parse the IPv4 header (first 20 characters after ethernet header)
 	IPv4_header = packet[eth_length:20+eth_length]
