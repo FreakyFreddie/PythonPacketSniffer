@@ -106,7 +106,7 @@ def	IPv4(packet, eth_length):
 	#B unpacking to unsigned char
 	#H unpacking to unsigned short int
 	#s unpacking to string of 4 chars
-	IPv4h = unpack('!BBHHHBBH4s4s', ip_header)
+	IPv4h = struct.unpack('!BBHHHBBH4s4s', IPv4_header)
 	
 	#version and internet header length (ihl) are in the first unsigned char
 	IPv4h_version_ihl = IPv4h[0]
@@ -127,12 +127,6 @@ def	IPv4(packet, eth_length):
 	#TTL = last B
 	IPv4h_ttl = IPv4h[5]
 	
-	#IPv4 protocols:
-	#hex		name		decimal
-	#0006		TCP			6
-	#0011		UDP			17
-	#0001		ICMP		1
-	#append list to listen in on other protocols
 	#IPv4 protocol number is an unsigned char
 	IPv4h_protocol = IPv4h[6]
 	
@@ -143,9 +137,33 @@ def	IPv4(packet, eth_length):
 	
 	print 'Version : ' + str(IPv4h_version) + ' IP Header Length : ' + str(IPv4h_ihl) + ' TTL : ' + str(IPv4h_ttl) + ' Protocol: ' + str(IPv4h_protocol) + ' Source IP: ' + str(IPv4h_source_address) + ' Destination IP: ' + str(IPv4h_destination_address)
 
+	#IPv4 protocols:
+	#hex		name		decimal
+	#0006		TCP			6
+	#0011		UDP			17
+	#0001		ICMP		1
+	#append list to listen in on other protocols
+	if IPv4h_protocol == 6:
+		TCP(packet)
+	elif IPv4h_protocol == 17:
+		UDP(packet)
+	elif IPv4h_protocol == 1:
+		ICMP(packet)
+	
 def ARP(packet, eth_length):
 	
 
 def IPv6(packet, eth_length):
 	
+	
+def TCP(packet, eth_length):
+	
+
+def UDP(packet):
+
+
+def ICMP(packet):
+	
+	
+
 	
