@@ -159,7 +159,9 @@ def IPv4(packet, eth_length):
 	elif IPv4h_protocol == 1:
 		ICMP(packet)
 	
-def ARP(packet, eth_length):
+def ARP(packet):
+	#parse the ARP header 
+	ARP_header = packet[0:ARP_length]
 	
 	#							ARP HEADER
 	#0                   1                   2                   3
@@ -181,9 +183,13 @@ def ARP(packet, eth_length):
 	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
 	#|   				   Target protocol address                   |
 	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
-def IPv6(packet, eth_length):
+
+	#unpack ARP header
+	ARPh = struct.unpack('', ARP_header)
 	
-def TCP(packet, eth_length):
+def IPv6(packet):
+	
+def TCP(packet):
 	
 
 def UDP(packet):
