@@ -171,9 +171,34 @@ def UDP(packet):
 
 
 def ICMP(packet):
+	#ICMP header length is 4 bytes
+	ICMP_length = 4
 	
-	
+	#parse ICMP header
+	ICMP_header = packet[0:ICMP_length]
 
+	#unpack ICMP header
+	ICMPh = struct.unpack('!BBH' , ICMP_header)
+	
+	#							ICMP HEADER
+	#0                   1                   2                   3
+	#0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|		Type	 | 		Code     |           Checksum            |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|                        Rest of header	                     |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	
+	#extract info
+	ICMPh_type = ICMPh[0]
+	ICMPh_code = ICMPh[1]
+	ICMPh_checksum = ICMPh[2]
+	
+	#extract data
+	ICMP_data = packet[ICMP_length:]
+	
+	#print data for now
+	print 'Data : ' + ICMP_data
 	
 
 #while True:
