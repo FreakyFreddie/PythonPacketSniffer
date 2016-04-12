@@ -173,14 +173,63 @@ def ARP(packet):
 def IPv6(packet):
 	
 def TCP(packet):
+	#The length of the TCP header is 20 bytes
+	TCP_length = 20
 	
+	#parse the TCP header
+	TCP_header = packet[0:TCP_length]
+	
+	#							TCP HEADER
+	#0                   1                   2                   3
+	#0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|          Source Port          |       Destination Port        |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|                        Sequence Number                        |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|                    Acknowledgment Number                      |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|  Data |           |U|A|P|R|S|F|                               |
+	#| Offset| Reserved  |R|C|S|S|Y|I|            Window             |
+	#|       |           |G|K|H|T|N|N|                               |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|           Checksum            |         Urgent Pointer        |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|                    Options                    |    Padding    |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|                             data                              |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+	#unpacking the TCP header
+	#H unpacking to unsigned short int
+	#L unpacking to unsigned long int (32bit)
+	#B unpacking to unsigned char
+	TCPh = unpack('HHLLBBHHH', TCP_header)
+	
+	#extract info
+	TCP_source_port = TCPh[0]
+	TCP_destination_port = TCPh[1]
+	TCP_sequence = TCPh[2]
+	TCP_acknowledgement = TCPh[3]
+	TCP_Data_Offset_reserved = TCPh[4]
+	
+	#extract TCP length in bytes
+	#options & padding may vary
+	TCPh_length = doff_reserved >> 4
+	TCPh_length = TCPh_length * 4
+
+	print 'Source Port : ' + str(TCP_source_port) + ' Dest Port : ' + str(TCP_dest_port) + ' Sequence Number : ' + str(TCP_sequence) + ' Acknowledgement : ' + str(TCP_acknowledgement) + ' TCP header length : ' + str(TCPh_length)
+
+	#extract data
+	TCP_data = packet[TCPh_length:]
+	
+	#print data for now
+	print 'Data : ' + TCP_data
 
 def UDP(packet):
 
 
 def ICMP(packet):
-	
-	
 
 	
 
