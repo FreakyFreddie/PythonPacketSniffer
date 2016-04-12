@@ -96,7 +96,7 @@ def extract_packet(sock):
 	#append list to listen in on other protocols
 
 	if eth_protocol == 2048:
-			IPv4(packet, eth_length)
+			IPv4(packet)
 	elif eth_protocol == 2054:
 			ARP(packet)
 	elif eth_protocol == 34525:
