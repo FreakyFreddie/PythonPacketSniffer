@@ -112,7 +112,7 @@ def	IPv4(packet, eth_length):
 	IPv4h_version_ihl = IPv4h[0]
 	
 	#to get IPv4 version, shift 4 MSB 4 positions right
-	IPv4_hversion = IPv4h_version_ihl >> 4
+	IPv4h_version = IPv4h_version_ihl >> 4
 	
 	#to get IPv4 internet header length, we need the 4 LSB
 	#ihl & 00001111
@@ -138,10 +138,10 @@ def	IPv4(packet, eth_length):
 	
 	#convert packed source and destination IPv4 address to correct format
 	#4s 4s was used to unpack
-	IPv4source_address = socket.inet_ntoa(IPv4h[8])
-	IPv4destination_address = socket.inet_ntoa(IPv4h[9])
+	IPv4_source_address = socket.inet_ntoa(IPv4h[8])
+	IPv4_destination_address = socket.inet_ntoa(IPv4h[9])
 	
-	print 'Version : ' + str(version) + ' IP Header Length : ' + str(ihl) + ' TTL : ' + str($
+	print 'Version : ' + str(IPv4h_version) + ' IP Header Length : ' + str(IPv4h_ihl) + ' TTL : ' + str(IPv4h_ttl) + ' Protocol: ' + str(IPv4h_protocol) + ' Source IP: ' + str(IPv4h_source_address) + ' Destination IP: ' + str(IPv4h_destination_address)
 
 def ARP(packet, eth_length):
 	
