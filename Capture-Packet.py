@@ -68,3 +68,16 @@ def extract_packet(sock)
 	
 	#write MAC addresses to file
 	print 'Destination MAC : ' + eth_addr(packet[0:6]) + ' Source MAC : ' + eth_addr(packet[6:12]) + ' Protocol : ' + str(eth_protocol)
+
+	#ethertypes:
+	#numbers	name		decimal
+	#0800		IPv4		2048
+	#0806		ARP			2054
+	#86DD		IPv6		34525
+	#append list to listen in on other protocols
+	if eth_protocol == 2048:
+		IPv4(packet, eth_length)
+	elif eth_protocol == 2054:
+		ARP(packet)
+	elif eth_protocol == 34525:
+		IPv6(packet)
