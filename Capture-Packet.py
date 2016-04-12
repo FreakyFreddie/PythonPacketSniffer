@@ -194,6 +194,8 @@ def ICMP(packet):
 	ICMPh_code = ICMPh[1]
 	ICMPh_checksum = ICMPh[2]
 	
+	print 'Type : ' + str(ICMPh_type) + ' Code : ' + str(ICMPh_code) + ' Checksum : ' + str(ICMPh_checksum)
+	
 	#extract data
 	ICMP_data = packet[ICMP_length:]
 	
