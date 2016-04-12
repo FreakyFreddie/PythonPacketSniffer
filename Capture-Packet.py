@@ -149,6 +149,9 @@ def IPv4(packet):
 
 	print 'Version : ' + str(IPv4h_version) + ' IP Header Length : ' + str(IPv4h_ihl) + ' TTL : ' + str(IPv4h_ttl) + ' Protocol: ' + str(IPv4h_protocol) + ' Source IP: ' + str(IPv4h_source_address) + ' Destination IP: ' + str(IPv4h_destination_address)
 
+	#remove IPv4 header from packet
+	packet = packet[IPv4_length:]
+	
 	#IPv4 protocols:
 	#hex		name		decimal
 	#0006		TCP			6
