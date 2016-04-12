@@ -136,7 +136,12 @@ def	IPv4(packet, eth_length):
 	#IPv4 protocol number is an unsigned char
 	IPv4h_protocol = IPv4h[6]
 	
+	#convert packed source and destination IPv4 address to correct format
+	#4s 4s was used to unpack
+	IPv4source_address = socket.inet_ntoa(IPv4h[8])
+	IPv4destination_address = socket.inet_ntoa(IPv4h[9])
 	
+	print 'Version : ' + str(version) + ' IP Header Length : ' + str(ihl) + ' TTL : ' + str($
 
 def ARP(packet, eth_length):
 	
