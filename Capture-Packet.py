@@ -42,17 +42,17 @@ def MAC_address(packet):
 #Datalink Layer Protocol [ETHERNET]
 #Extracting packets from socket
 def extract_packet(sock):
-        packetlog = open('packetlog.txt', 'a')
+	packetlog = open('packetlog.txt', 'a')
 
-        #returns packet in hex from socket with bufsize 65565
-        #returns packet as string
-        packet = sock.recv(65565)
+	#returns packet in hex from socket with bufsize 65565
+	#returns packet as string
+	packet = sock.recv(65565)
 
-        #The length of the ethernet header is 14 bytes (layer 2 ethernet frame)
-        eth_length = 14
+	#The length of the ethernet header is 14 bytes (layer 2 ethernet frame)
+	eth_length = 14
 
-        #First 14 bytes are ethernet header
-        eth_header = packet[0:eth_length]
+	#First 14 bytes are ethernet header
+	eth_header = packet[0:eth_length]
 
 	#							ETHERNET HEADER
 	#0                   1                   2                   3
@@ -67,44 +67,47 @@ def extract_packet(sock):
 	#|        Type code              |                               |
 	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 		
-        #Unpack eth_header string according to the given format !6s6sH
-        #!indicates we don't know if the data is big or little endian
-        #s indicates a string of characters (6xchar 6xchar)
-        #H indicates an unsigned short int (1xunsigned short int)
-        #Char is 1 byte, short int is 2 bytes
-        #MAC address format is 6 groups of 2 hexadecimal digits
-        eth = struct.unpack('!6s6sH', eth_header)
+	#Unpack eth_header string according to the given format !6s6sH
+	#!indicates we don't know if the data is big or little endian
+	#s indicates a string of characters (6xchar 6xchar)
+	#H indicates an unsigned short int (1xunsigned short int)
+	#Char is 1 byte, short int is 2 bytes
+	#MAC address format is 6 groups of 2 hexadecimal digits
+	eth = struct.unpack('!6s6sH', eth_header)
 
-        #protocol used is short int from eth_header
-                #NOTE: Some systems use little endian order (like intel)
-                #we need to swap the bytes on those systems to get a uniform result
-                #ntohs switches network byte order to host byte order
-                #should any byte order problems occur, try implementing the ntohs function
-        eth_protocol = eth[2]
+	#protocol used is short int from eth_header
+			#NOTE: Some systems use little endian order (like intel)
+			#we need to swap the bytes on those systems to get a uniform result
+			#ntohs switches network byte order to host byte order
+			#should any byte order problems occur, try implementing the ntohs function
+	eth_protocol = eth[2]
 
-        #write MAC addresses to file
-        print 'Destination MAC : ' + MAC_address(packet[0:6]) + ' Source MAC : ' + MAC_address(packet[6:12]) + ' Protocol : ' + str(eth_protocol)
+	#write MAC addresses to file
+	print 'Destination MAC : ' + MAC_address(packet[0:6]) + ' Source MAC : ' + MAC_address(packet[6:12]) + ' Protocol : ' + str(eth_protocol)
 
-        #ethertypes:
-        #hex            name            decimal
-        #0800           IPv4            2048
-        #0806           ARP                     2054
-        #86DD           IPv6            34525
-        #append list to listen in on other protocols
+	#remove ethernet header from packet
+	packet = packet[eth_length:]
+	
+	#ethertypes:
+	#hex            name            decimal
+	#0800           IPv4            2048
+	#0806           ARP                     2054
+	#86DD           IPv6            34525
+	#append list to listen in on other protocols
 
-        if eth_protocol == 2048:
-                IPv4(packet, eth_length)
-        elif eth_protocol == 2054:
-                ARP(packet)
-        elif eth_protocol == 34525:
-                IPv6(packet)
-		else:
-			print 'Protocol not supported.'
+	if eth_protocol == 2048:
+			IPv4(packet, eth_length)
+	elif eth_protocol == 2054:
+			ARP(packet)
+	elif eth_protocol == 34525:
+			IPv6(packet)
+	else:
+		print 'Protocol not supported.'
 
 #Network Layer Protocols
-def IPv4(packet, eth_length):
+def IPv4(packet):
 	#parse the IPv4 header (first 20 characters after ethernet header)
-	IPv4_header = packet[eth_length:20+eth_length]
+	IPv4_header = packet[0:IPv4_length]
 
 	#							IPv4 HEADER
 	#0                   1                   2                   3
@@ -163,6 +166,9 @@ def IPv4(packet, eth_length):
 
 	print 'Version : ' + str(IPv4h_version) + ' IP Header Length : ' + str(IPv4h_ihl) + ' TTL : ' + str(IPv4h_ttl) + ' Protocol: ' + str(IPv4h_protocol) + ' Source IP: ' + str(IPv4h_source_address) + ' Destination IP: ' + str(IPv4h_destination_address)
 
+	#remove IPv4 header from packet
+	packet = packet[IPv4_length:]
+	
 	#IPv4 protocols:
 	#hex		name		decimal
 	#0006		TCP			6
@@ -178,22 +184,22 @@ def IPv4(packet, eth_length):
 	else:
 		print 'Protocol not supported.'
 	
-def ARP(packet, eth_length):
+def ARP(packet):
 	
 
-def IPv6(packet, eth_length):
+def IPv6(packet):
 
 
 #Transport Layer Protocols
-def TCP(packet, eth_length):
+def TCP(packet):
 	
 
 def UDP(packet):
 	#UDP header length is 8 bytes
 	UDP_length = 8
 	
-	#Parse UDP header
-	UDP_header = packet[0:UDP_length]
+	#parse the UDP header
+	TCP_header = packet[0:UDP_length]
 	
 	#							UDP HEADER
 	#0                   1                   2                   3
