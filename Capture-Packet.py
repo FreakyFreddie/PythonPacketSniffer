@@ -25,7 +25,7 @@ def create_socket():
         except socket.error, errormsg:
                 #writing error message to log file
                 errorlog = open('errorlog.txt', 'a')
-                errorlog.write(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' Socket cr$
+                errorlog.write(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')  + ' Socket creation failed. Code: ' + str(msg[0]) + 'Message ' + msg[1] + '\n')
                 errorlog.close
                 sys.exit()
 
@@ -35,7 +35,7 @@ def create_socket():
 #x indicates the Signed hexadecimal (lowercase) format
 #ord() returns an integer representing the unicode point of the string character
 def MAC_address(packet):
-        MAC = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x" % (ord(packet[0]), ord(packet[1]), ord(packet[2]), o$
+        MAC = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x" % (ord(packet[0]), ord(packet[1]), ord(packet[2]), ord(packet[3]), ord(packet[4]),  ord(packet[5]))
         return MAC
 
 	
@@ -70,7 +70,7 @@ def extract_packet(sock):
         eth_protocol = eth[2]
 
         #write MAC addresses to file
-        print 'Destination MAC : ' + MAC_address(packet[0:6]) + ' Source MAC : ' + MAC_address(pac$
+        print 'Destination MAC : ' + MAC_address(packet[0:6]) + ' Source MAC : ' + MAC_address(packet[6:12]) + ' Protocol : ' + str(eth_protocol)
 
         #ethertypes:
         #hex            name            decimal
@@ -140,7 +140,7 @@ def	IPv4(packet, eth_length):
 	IPv4_destination_address = socket.inet_ntoa(IPv4h[9])
 	
 	print 'Version : ' + str(IPv4h_version) + ' IP Header Length : ' + str(IPv4h_ihl) + ' TTL : ' + str(IPv4h_ttl) + ' Protocol: ' + str(IPv4h_protocol) + ' Source IP: ' + str(IPv4h_source_address) + ' Destination IP: ' + str(IPv4h_destination_address)
-=======
+
 def     IPv4(packet, eth_length):
         #parse the IPv4 header (first 20 characters after ethernet header)
         IPv4_header = packet[eth_length:20+eth_length]
@@ -200,9 +200,7 @@ def     IPv4(packet, eth_length):
         IPv4h_source_address = socket.inet_ntoa(IPv4h[8])
         IPv4h_destination_address = socket.inet_ntoa(IPv4h[9])
 
-        print 'Version : ' + str(IPv4h_version) + ' IP Header Length : ' + str(IPv4h_ihl) + ' TTL $
-
->>>>>>> origin/IPv4
+        print 'Version : ' + str(IPv4h_version) + ' IP Header Length : ' + str(IPv4h_ihl) + ' TTL : ' + str(IPv4h_ttl) + ' Protocol: ' + str(IPv4h_protocol) + ' Source IP: ' + str(IPv4h_source_address) + ' Destination IP: ' + str(IPv4h_destination_address)
 
 	#IPv4 protocols:
 	#hex		name		decimal
@@ -222,8 +220,6 @@ def ARP(packet, eth_length):
 
 def IPv6(packet, eth_length):
 	
-<<<<<<< HEAD
-	
 def TCP(packet, eth_length):
 	
 
@@ -235,10 +231,7 @@ def ICMP(packet):
 	
 
 	
-=======
-while True:
-        sock=create_socket()
-        extract_packet(sock)
 
-
->>>>>>> origin/IPv4
+#while True:
+#        sock=create_socket()
+#        extract_packet(sock)
