@@ -13,7 +13,7 @@ import sys
 from datetime import datetime
 	
 #Creating a socket to capture all packets
-def create_socket()
+def create_socket():
 	#errorhandling
 	try:
 		#AF_PACKET 
@@ -33,12 +33,13 @@ def create_socket()
 #% indicates we want to format everything between parentheses
 #.2 indicates that we always want a minimum of 2 hex numbers before each colon
 #x indicates the Signed hexadecimal (lowercase) format
+#ord() returns an integer representing the unicode point of the string character
 def MAC_address(packet):
-	MAC = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x" % (hexcode(packet[0], packet[1], packet[2], packet[3], packet[4],  packet[5])
+	MAC = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x" % (ord(packet[0]), ord(packet[1]), ord(packet[2]), ord(packet[3]), ord(packet[4]),  ord(packet[5]))
 	return MAC
 	
 #Extracting packets from socket
-def extract_packet(sock)
+def extract_packet(sock):
 	packetlog = open('packetlog.txt', 'a')
 	
 	#returns packet in hex from socket with bufsize 65565
@@ -53,11 +54,11 @@ def extract_packet(sock)
 	
 	#Unpack eth_header string according to the given format !6s6sH
 	#!indicates we don't know if the data is big or little endian
-	#s indicates a character (6xchar 6xchar)
+	#s indicates a string of characters (6xchar 6xchar)
 	#H indicates an unsigned short int (1xunsigned short int)
 	#Char is 1 byte, short int is 2 bytes
 	#MAC address format is 6 groups of 2 hexadecimal digits
-	eth = struct.unpack(!6s6sH, eth_header)
+	eth = struct.unpack('!6s6sH', eth_header)
 	
 	#protocol used is short int from eth_header
 		#NOTE: Some systems use little endian order (like intel)
@@ -67,10 +68,10 @@ def extract_packet(sock)
 	eth_protocol = eth[2]
 	
 	#write MAC addresses to file
-	print 'Destination MAC : ' + eth_addr(packet[0:6]) + ' Source MAC : ' + eth_addr(packet[6:12]) + ' Protocol : ' + str(eth_protocol)
+	print 'Destination MAC : ' + MAC_address(packet[0:6]) + ' Source MAC : ' + MAC_address(packet[6:12]) + ' Protocol : ' + str(eth_protocol)
 
 	#ethertypes:
-	#numbers	name		decimal
+	#hex		name		decimal
 	#0800		IPv4		2048
 	#0806		ARP			2054
 	#86DD		IPv6		34525
@@ -81,3 +82,65 @@ def extract_packet(sock)
 		ARP(packet)
 	elif eth_protocol == 34525:
 		IPv6(packet)
+		
+def	IPv4(packet, eth_length):
+	#parse the IPv4 header (first 20 characters after ethernet header)
+	IPv4_header = packet[eth_length:20+eth_length]
+	
+	#							IPv4 HEADER
+	#0                   1                   2                   3
+	#0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|Version|  IHL  |Type of Service|          Total Length         |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|         Identification        |Flags|      Fragment Offset    |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|  Time to Live |    Protocol   |         Header Checksum       |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|                       Source Address                          |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|                    Destination Address                        |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+	
+
+	#unpacking the IPv4 header
+	#B unpacking to unsigned char
+	#H unpacking to unsigned short int
+	#s unpacking to string of 4 chars
+	IPv4h = unpack('!BBHHHBBH4s4s', ip_header)
+	
+	#version and internet header length (ihl) are in the first unsigned char
+	IPv4h_version_ihl = IPv4h[0]
+	
+	#to get IPv4 version, shift 4 MSB 4 positions right
+	IPv4_hversion = IPv4h_version_ihl >> 4
+	
+	#to get IPv4 internet header length, we need the 4 LSB
+	#ihl & 00001111
+	IPv4h_ihl = IPv4h_version_ihl & 0xF
+	
+	#ihl is the number if 32bit words in the header
+	#IPv4h_length is in bytes (*4)
+	IPv4h_length = IPv4h_ihl * 4
+	
+	#IPv4_ttl is unpacked on 6th position
+	#B(1byte) B(1byte) H(2bytes) H(2bytes) H(2bytes) B(1byte)
+	#TTL = last B
+	IPv4h_ttl = IPv4h[5]
+	
+	#IPv4 protocols:
+	#hex		name		decimal
+	#0006		TCP			6
+	#0011		UDP			17
+	#0001		ICMP		1
+	#append list to listen in on other protocols
+	#IPv4 protocol number is an unsigned char
+	IPv4h_protocol = IPv4h[6]
+	
+	
+
+def ARP(packet, eth_length):
+	
+
+def IPv6(packet, eth_length):
+	
+	
