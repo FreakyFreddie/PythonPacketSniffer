@@ -218,7 +218,7 @@ def TCP(packet):
 	TCPh_length = doff_reserved >> 4
 	TCPh_length = TCPh_length * 4
 
-	print 'Source Port : ' + str(TCP_source_port) + ' Dest Port : ' + str(TCP_dest_port) + ' Sequence Number : ' + str(TCP_sequence) + ' Acknowledgement : ' + str(TCP_acknowledgement) + ' TCP header length : ' + str(TCPh_length)
+	print 'Source Port : ' + str(TCP_source_port) + ' Dest Port : ' + str(TCP_destination_port) + ' Sequence Number : ' + str(TCP_sequence) + ' Acknowledgement : ' + str(TCP_acknowledgement) + ' TCP header length : ' + str(TCPh_length)
 
 	#extract data
 	TCP_data = packet[TCPh_length:]
