@@ -85,62 +85,6 @@ def extract_packet(sock):
         elif eth_protocol == 34525:
                 IPv6(packet)
 
-		
-
-def	IPv4(packet, eth_length):
-	#parse the IPv4 header (first 20 characters after ethernet header)
-	IPv4_header = packet[eth_length:20+eth_length]
-	
-	#							IPv4 HEADER
-	#0                   1                   2                   3
-	#0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	#|Version|  IHL  |Type of Service|          Total Length         |
-	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	#|         Identification        |Flags|      Fragment Offset    |
-	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	#|  Time to Live |    Protocol   |         Header Checksum       |
-	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	#|                       Source Address                          |
-	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	#|                    Destination Address                        |
-	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+	
-
-	#unpacking the IPv4 header
-	#B unpacking to unsigned char
-	#H unpacking to unsigned short int
-	#s unpacking to string of 4 chars
-	IPv4h = struct.unpack('!BBHHHBBH4s4s', IPv4_header)
-	
-	#version and internet header length (ihl) are in the first unsigned char
-	IPv4h_version_ihl = IPv4h[0]
-	
-	#to get IPv4 version, shift 4 MSB 4 positions right
-	IPv4h_version = IPv4h_version_ihl >> 4
-	
-	#to get IPv4 internet header length, we need the 4 LSB
-	#ihl & 00001111
-	IPv4h_ihl = IPv4h_version_ihl & 0xF
-	
-	#ihl is the number if 32bit words in the header
-	#IPv4h_length is in bytes (*4)
-	IPv4h_length = IPv4h_ihl * 4
-	
-	#IPv4_ttl is unpacked on 6th position
-	#B(1byte) B(1byte) H(2bytes) H(2bytes) H(2bytes) B(1byte)
-	#TTL = last B
-	IPv4h_ttl = IPv4h[5]
-	
-	#IPv4 protocol number is an unsigned char
-	IPv4h_protocol = IPv4h[6]
-	
-	#convert packed source and destination IPv4 address to correct format
-	#4s 4s was used to unpack
-	IPv4_source_address = socket.inet_ntoa(IPv4h[8])
-	IPv4_destination_address = socket.inet_ntoa(IPv4h[9])
-	
-	print 'Version : ' + str(IPv4h_version) + ' IP Header Length : ' + str(IPv4h_ihl) + ' TTL : ' + str(IPv4h_ttl) + ' Protocol: ' + str(IPv4h_protocol) + ' Source IP: ' + str(IPv4h_source_address) + ' Destination IP: ' + str(IPv4h_destination_address)
-
 def     IPv4(packet, eth_length):
         #parse the IPv4 header (first 20 characters after ethernet header)
         IPv4_header = packet[eth_length:20+eth_length]
@@ -235,3 +179,4 @@ def ICMP(packet):
 #while True:
 #        sock=create_socket()
 #        extract_packet(sock)
+
