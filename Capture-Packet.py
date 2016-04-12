@@ -28,3 +28,11 @@ def create_socket()
 		errorlog.write(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' Socket creation failed. Code: ' + str(msg[0]) + 'Message ' + msg[1] + '\n')
 		errorlog.close
 		sys.exit()
+		
+#MAC address structure
+#% indicates we want to format everything between parentheses
+#.2 indicates that we always want a minimum of 2 hex numbers before each colon
+#x indicates the Signed hexadecimal (lowercase) format
+def MAC_address(packet):
+	MAC = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x" % (hexcode(packet[0], packet[1], packet[2], packet[3], packet[4],  packet[5])
+	return MAC
