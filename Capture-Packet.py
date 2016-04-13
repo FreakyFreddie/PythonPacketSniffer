@@ -14,21 +14,21 @@ from datetime import datetime
 
 #Creating a socket to capture all packets
 def create_socket():
-        #errorhandling
-        try:
-                #AF_PACKET 
-                #SOCK_RAW receives both UDP AND TCP traffic
-                #ntohs(0x0003) = ETH_P_ALL
-                #network byte order to host byte order
-                sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
-                return sock
+	#errorhandling
+	try:
+		#AF_PACKET 
+		#SOCK_RAW receives both UDP AND TCP traffic
+		#ntohs(0x0003) = ETH_P_ALL
+		#network byte order to host byte order
+		sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
+		return sock
 
-        except socket.error, errormsg:
-                #writing error message to log file
-                errorlog = open('errorlog.txt', 'a')
-                errorlog.write(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' Socket creation failed. Code: ' + str(msg[0]) + 'Message ' + msg[1] + '\n')
-                errorlog.close
-                sys.exit()
+	except socket.error, errormsg:
+		#writing error message to log file
+		errorlog = open('errorlog.txt', 'a')
+		errorlog.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' Socket creation failed. Code: ' + str(msg[0]) + 'Message ' + msg[1] + '\n')
+		errorlog.close
+		sys.exit()
 
 #MAC address structure
 #% indicates we want to format everything between parentheses
@@ -36,8 +36,8 @@ def create_socket():
 #x indicates the Signed hexadecimal (lowercase) format
 #ord() returns an integer representing the unicode point of the string character
 def MAC_address(packet):
-        MAC = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x" % (ord(packet[0]), ord(packet[1]), ord(packet[2]), ord(packet[3]), ord(packet[4]), ord(packet[5]))
-        return MAC
+	MAC = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x" % (ord(packet[0]), ord(packet[1]), ord(packet[2]), ord(packet[3]), ord(packet[4]), ord(packet[5]))
+	return MAC
 
 #Datalink Layer Protocol [ETHERNET]
 #Extracting packets from socket
@@ -76,10 +76,10 @@ def extract_packet(sock):
 	eth = struct.unpack('!6s6sH', eth_header)
 
 	#protocol used is short int from eth_header
-			#NOTE: Some systems use little endian order (like intel)
-			#we need to swap the bytes on those systems to get a uniform result
-			#ntohs switches network byte order to host byte order
-			#should any byte order problems occur, try implementing the ntohs function
+	#NOTE: Some systems use little endian order (like intel)
+	#we need to swap the bytes on those systems to get a uniform result
+	#ntohs switches network byte order to host byte order
+	#should any byte order problems occur, try implementing the ntohs function
 	eth_protocol = eth[2]
 
 	#write MAC addresses to file
@@ -94,7 +94,6 @@ def extract_packet(sock):
 	#0806           ARP                     2054
 	#86DD           IPv6            34525
 	#append list to listen in on other protocols
-
 	if eth_protocol == 2048:
 			IPv4(packet)
 	elif eth_protocol == 2054:
@@ -106,6 +105,9 @@ def extract_packet(sock):
 
 #Network Layer Protocols
 def IPv4(packet):
+	#The length of the IPv4 header is 20 bytes
+	IPv4_length = 20
+
 	#parse the IPv4 header (first 20 characters after ethernet header)
 	IPv4_header = packet[0:IPv4_length]
 
@@ -188,11 +190,61 @@ def ARP(packet):
 	
 
 def IPv6(packet):
-
-
+	
 #Transport Layer Protocols
 def TCP(packet):
+	#The length of the TCP header is 20 bytes
+	TCP_length = 32
 	
+	#parse the TCP header
+	TCP_header = packet[0:TCP_length]
+	
+	#							TCP HEADER
+	#0                   1                   2                   3
+	#0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|          Source Port          |       Destination Port        |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|                        Sequence Number                        |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|                    Acknowledgment Number                      |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|  Data |           |U|A|P|R|S|F|                               |
+	#| Offset| Reserved  |R|C|S|S|Y|I|            Window             |
+	#|       |           |G|K|H|T|N|N|                               |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|           Checksum            |         Urgent Pointer        |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|                    Options                    |    Padding    |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|                             data                              |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+	#unpacking the TCP header
+	#H unpacking to unsigned short int
+	#L unpacking to unsigned long int (32bit)
+	#B unpacking to unsigned char
+	TCPh = struct.unpack('HHLLBBHHH', TCP_header)
+	
+	#extract info
+	TCP_source_port = TCPh[0]
+	TCP_destination_port = TCPh[1]
+	TCP_sequence = TCPh[2]
+	TCP_acknowledgement = TCPh[3]
+	TCP_Data_Offset_reserved = TCPh[4]
+	
+	#extract TCP length in bytes
+	#options & padding may vary
+	TCPh_length = TCP_Data_Offset_reserved >> 4
+	TCPh_length = TCPh_length * 4
+
+	print 'Source Port : ' + str(TCP_source_port) + ' Dest Port : ' + str(TCP_destination_port) + ' Sequence Number : ' + str(TCP_sequence) + ' Acknowledgement : ' + str(TCP_acknowledgement) + ' TCP header length : ' + str(TCPh_length)
+
+	#extract data
+	TCP_data = packet[TCPh_length:]
+	
+	#print data for now
+	print 'Data : ' + TCP_data	
 
 def UDP(packet):
 	#UDP header length is 8 bytes
@@ -229,9 +281,36 @@ def UDP(packet):
 	print 'Data : ' + UDP_data
 	
 def ICMP(packet):
+	#ICMP header length is 4 bytes
+	ICMP_length = 4
 	
-	
+	#parse ICMP header
+	ICMP_header = packet[0:ICMP_length]
 
+	#unpack ICMP header
+	ICMPh = struct.unpack('!BBH' , ICMP_header)
+	
+	#							ICMP HEADER
+	#0                   1                   2                   3
+	#0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|		Type	 | 		Code     |           Checksum            |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|                        Rest of header	                     |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	
+	#extract info
+	ICMPh_type = ICMPh[0]
+	ICMPh_code = ICMPh[1]
+	ICMPh_checksum = ICMPh[2]
+	
+	print 'Type : ' + str(ICMPh_type) + ' Code : ' + str(ICMPh_code) + ' Checksum : ' + str(ICMPh_checksum)
+	
+	#extract data
+	ICMP_data = packet[ICMP_length:]
+	
+	#print data for now
+	print 'Data : ' + ICMP_data
 	
 
 #while True:
