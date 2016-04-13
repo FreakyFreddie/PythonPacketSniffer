@@ -26,7 +26,7 @@ def create_socket():
 	except socket.error, errormsg:
 		#writing error message to log file
 		errorlog = open('errorlog.txt', 'a')
-		errorlog.write(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' Socket creation failed. Code: ' + str(msg[0]) + 'Message ' + msg[1] + '\n')
+		errorlog.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' Socket creation failed. Code: ' + str(msg[0]) + 'Message ' + msg[1] + '\n')
 		errorlog.close
 		sys.exit()
 
@@ -62,10 +62,11 @@ def extract_packet(sock):
 	eth = struct.unpack('!6s6sH', eth_header)
 
 	#protocol used is short int from eth_header
-			#NOTE: Some systems use little endian order (like intel)
-			#we need to swap the bytes on those systems to get a uniform result
-			#ntohs switches network byte order to host byte order
-			#should any byte order problems occur, try implementing the ntohs function
+	#NOTE: Some systems use little endian order (like intel)
+	#we need to swap the bytes on those systems to get a uniform result
+	#ntohs switches network byte order to host byte order
+	#should any byte order problems occur, try implementing the ntohs function
+
 	eth_protocol = eth[2]
 
 	#write MAC addresses to file
@@ -80,7 +81,6 @@ def extract_packet(sock):
 	#0806           ARP                     2054
 	#86DD           IPv6            34525
 	#append list to listen in on other protocols
-
 	if eth_protocol == 2048:
 			IPv4(packet)
 	elif eth_protocol == 2054:
@@ -89,6 +89,9 @@ def extract_packet(sock):
 			IPv6(packet)
 
 def IPv4(packet):
+	#The length of the IPv4 header is 20 bytes
+	IPv4_length = 20
+
 	#parse the IPv4 header (first 20 characters after ethernet header)
 	IPv4_header = packet[0:IPv4_length]
 
@@ -169,9 +172,61 @@ def ARP(packet):
 	
 
 def IPv6(packet):
+
 	
 def TCP(packet):
+	#The length of the TCP header is 20 bytes
+	TCP_length = 32
 	
+	#parse the TCP header
+	TCP_header = packet[0:TCP_length]
+	
+	#							TCP HEADER
+	#0                   1                   2                   3
+	#0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|          Source Port          |       Destination Port        |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|                        Sequence Number                        |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|                    Acknowledgment Number                      |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|  Data |           |U|A|P|R|S|F|                               |
+	#| Offset| Reserved  |R|C|S|S|Y|I|            Window             |
+	#|       |           |G|K|H|T|N|N|                               |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|           Checksum            |         Urgent Pointer        |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|                    Options                    |    Padding    |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|                             data                              |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+	#unpacking the TCP header
+	#H unpacking to unsigned short int
+	#L unpacking to unsigned long int (32bit)
+	#B unpacking to unsigned char
+	TCPh = struct.unpack('HHLLBBHHH', TCP_header)
+	
+	#extract info
+	TCP_source_port = TCPh[0]
+	TCP_destination_port = TCPh[1]
+	TCP_sequence = TCPh[2]
+	TCP_acknowledgement = TCPh[3]
+	TCP_Data_Offset_reserved = TCPh[4]
+	
+	#extract TCP length in bytes
+	#options & padding may vary
+	TCPh_length = TCP_Data_Offset_reserved >> 4
+	TCPh_length = TCPh_length * 4
+
+	print 'Source Port : ' + str(TCP_source_port) + ' Dest Port : ' + str(TCP_destination_port) + ' Sequence Number : ' + str(TCP_sequence) + ' Acknowledgement : ' + str(TCP_acknowledgement) + ' TCP header length : ' + str(TCPh_length)
+
+	#extract data
+	TCP_data = packet[TCPh_length:]
+	
+	#print data for now
+	print 'Data : ' + TCP_data
 
 def UDP(packet):
 
