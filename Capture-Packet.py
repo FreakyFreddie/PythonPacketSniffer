@@ -39,32 +39,32 @@ def MAC_address(packet):
 	MAC = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x" % (ord(packet[0]), ord(packet[1]), ord(packet[2]), ord(packet[3]), ord(packet[4]), ord(packet[5]))
 	return MAC
 
-#Datalink Layer Protocol [ETHERNET]
+#Datalink Layer Protocol [only ETHERNET supported]
 #Extracting packets from socket
 def extract_packet(sock):
-	packetlog = open('packetlog.txt', 'a')
+	#packetlog = open('packetlog.txt', 'a')
 
 	#returns packet in hex from socket with bufsize 65565
 	#returns packet as string
-	packet = sock.recv(65565)
+	packet = sock.recvfrom(65565)
 
+	#debug
+	print packet
+	
 	#The length of the ethernet header is 14 bytes (layer 2 ethernet frame)
 	eth_length = 14
 
 	#First 14 bytes are ethernet header
+	packet = packet[0]
 	eth_header = packet[0:eth_length]
 
 	#							ETHERNET HEADER
 	#0                   1                   2                   3
 	#0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	#|       Ethernet destination address (first 32 bits)            |
-	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	#| Ethernet dest (last 16 bits)  |Ethernet source (first 16 bits)|
 	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	#|       Ethernet source address (last 32 bits)                  |
-	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	#|        Type code              |                               |
+	#|       VLAN (optional)		 |      	 EtherType			 |
 	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 		
 	#Unpack eth_header string according to the given format !6s6sH
@@ -88,13 +88,19 @@ def extract_packet(sock):
 	#remove ethernet header from packet
 	packet = packet[eth_length:]
 	
+	#eth_protocol 1500 or less? The number is the size of ethernet frame payload
+	#above 1500 indicates ethernet II frame
+	if eth_protocol <= 1500:
+		print ' payload = ' + str(eth_protocol)
+		print ' Protocols not supported '
+
 	#ethertypes:
 	#hex            name            decimal
 	#0800           IPv4            2048
-	#0806           ARP                     2054
+	#0806           ARP             2054
 	#86DD           IPv6            34525
 	#append list to listen in on other protocols
-	if eth_protocol == 2048:
+	elif eth_protocol == 2048:
 			IPv4(packet)
 	elif eth_protocol == 2054:
 			ARP(packet)
