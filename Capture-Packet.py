@@ -199,7 +199,7 @@ def UDP(packet):
 	UDP_length = 8
 	
 	#parse the UDP header
-	TCP_header = packet[0:UDP_length]
+	UDP_header = packet[0:UDP_length]
 	
 	#							UDP HEADER
 	#0                   1                   2                   3
@@ -220,7 +220,7 @@ def UDP(packet):
 	UDPh_length = UDPh[2]
 	UDPh_checksum = UDPh[3]
 	
-	print 'Source Port : ' + str(UDPh_source_port) + ' Dest Port : ' + str(UDPh_destintation_port) + ' Length : ' + str(UDP_length) + ' Checksum : ' + str(UDPh_checksum)
+	print 'Source Port : ' + str(UDPh_source_port) + ' Dest Port : ' + str(UDPh_destination_port) + ' Length : ' + str(UDP_length) + ' Checksum : ' + str(UDPh_checksum)
 	
 	#extract data
 	UDP_data = packet[UDP_length:]
