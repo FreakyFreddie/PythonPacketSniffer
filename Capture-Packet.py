@@ -66,6 +66,7 @@ def extract_packet(sock):
 	#we need to swap the bytes on those systems to get a uniform result
 	#ntohs switches network byte order to host byte order
 	#should any byte order problems occur, try implementing the ntohs function
+
 	eth_protocol = eth[2]
 
 	#write MAC addresses to file
@@ -81,7 +82,7 @@ def extract_packet(sock):
 	#86DD           IPv6            34525
 	#append list to listen in on other protocols
 	if eth_protocol == 2048:
-			IPv4(packet, eth_length)
+			IPv4(packet)
 	elif eth_protocol == 2054:
 			ARP(packet)
 	elif eth_protocol == 34525:
@@ -171,6 +172,7 @@ def ARP(packet):
 	
 
 def IPv6(packet):
+
 	
 def TCP(packet):
 	#The length of the TCP header is 20 bytes
@@ -230,7 +232,36 @@ def UDP(packet):
 
 
 def ICMP(packet):
+	#ICMP header length is 4 bytes
+	ICMP_length = 4
+	
+	#parse ICMP header
+	ICMP_header = packet[0:ICMP_length]
 
+	#unpack ICMP header
+	ICMPh = struct.unpack('!BBH' , ICMP_header)
+	
+	#							ICMP HEADER
+	#0                   1                   2                   3
+	#0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|		Type	 | 		Code     |           Checksum            |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|                        Rest of header	                     |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	
+	#extract info
+	ICMPh_type = ICMPh[0]
+	ICMPh_code = ICMPh[1]
+	ICMPh_checksum = ICMPh[2]
+	
+	print 'Type : ' + str(ICMPh_type) + ' Code : ' + str(ICMPh_code) + ' Checksum : ' + str(ICMPh_checksum)
+	
+	#extract data
+	ICMP_data = packet[ICMP_length:]
+	
+	#print data for now
+	print 'Data : ' + ICMP_data
 	
 
 #while True:
