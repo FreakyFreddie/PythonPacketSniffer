@@ -174,7 +174,7 @@ def IPv6(packet):
 	
 def TCP(packet):
 	#The length of the TCP header is 20 bytes
-	TCP_length = 20
+	TCP_length = 32
 	
 	#parse the TCP header
 	TCP_header = packet[0:TCP_length]
@@ -204,7 +204,7 @@ def TCP(packet):
 	#H unpacking to unsigned short int
 	#L unpacking to unsigned long int (32bit)
 	#B unpacking to unsigned char
-	TCPh = unpack('HHLLBBHHH', TCP_header)
+	TCPh = struct.unpack('HHLLBBHHH', TCP_header)
 	
 	#extract info
 	TCP_source_port = TCPh[0]
@@ -215,7 +215,7 @@ def TCP(packet):
 	
 	#extract TCP length in bytes
 	#options & padding may vary
-	TCPh_length = doff_reserved >> 4
+	TCPh_length = TCP_Data_Offset_reserved >> 4
 	TCPh_length = TCPh_length * 4
 
 	print 'Source Port : ' + str(TCP_source_port) + ' Dest Port : ' + str(TCP_destination_port) + ' Sequence Number : ' + str(TCP_sequence) + ' Acknowledgement : ' + str(TCP_acknowledgement) + ' TCP header length : ' + str(TCPh_length)
