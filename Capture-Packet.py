@@ -167,7 +167,7 @@ def IPv4(packet):
 	
 def ARP(packet):
 	#ARP header length is 20 bytes
-	ARP_length = 20
+	ARP_length = 8
 	
 	#parse the ARP header 
 	ARP_header = packet[0:ARP_length]
