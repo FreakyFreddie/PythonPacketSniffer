@@ -39,6 +39,7 @@ def MAC_address(packet):
 	MAC = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x" % (ord(packet[0]), ord(packet[1]), ord(packet[2]), ord(packet[3]), ord(packet[4]), ord(packet[5]))
 	return MAC
 
+#Datalink Layer Protocol [ETHERNET]
 #Extracting packets from socket
 def extract_packet(sock):
 	packetlog = open('packetlog.txt', 'a')
@@ -53,6 +54,19 @@ def extract_packet(sock):
 	#First 14 bytes are ethernet header
 	eth_header = packet[0:eth_length]
 
+	#							ETHERNET HEADER
+	#0                   1                   2                   3
+	#0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|       Ethernet destination address (first 32 bits)            |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#| Ethernet dest (last 16 bits)  |Ethernet source (first 16 bits)|
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|       Ethernet source address (last 32 bits)                  |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|        Type code              |                               |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		
 	#Unpack eth_header string according to the given format !6s6sH
 	#!indicates we don't know if the data is big or little endian
 	#s indicates a string of characters (6xchar 6xchar)
@@ -66,7 +80,6 @@ def extract_packet(sock):
 	#we need to swap the bytes on those systems to get a uniform result
 	#ntohs switches network byte order to host byte order
 	#should any byte order problems occur, try implementing the ntohs function
-
 	eth_protocol = eth[2]
 
 	#write MAC addresses to file
@@ -87,7 +100,10 @@ def extract_packet(sock):
 			ARP(packet)
 	elif eth_protocol == 34525:
 			IPv6(packet)
+	else:
+		print 'Protocol not supported.'
 
+#Network Layer Protocols
 def IPv4(packet):
 	#The length of the IPv4 header is 20 bytes
 	IPv4_length = 20
@@ -167,13 +183,15 @@ def IPv4(packet):
 		UDP(packet)
 	elif IPv4h_protocol == 1:
 		ICMP(packet)
+	else:
+		print 'Protocol not supported.'
 	
 def ARP(packet):
 	
 
 def IPv6(packet):
-
 	
+#Transport Layer Protocols
 def TCP(packet):
 	#The length of the TCP header is 20 bytes
 	TCP_length = 32
@@ -226,11 +244,42 @@ def TCP(packet):
 	TCP_data = packet[TCPh_length:]
 	
 	#print data for now
-	print 'Data : ' + TCP_data
+	print 'Data : ' + TCP_data	
 
 def UDP(packet):
-
-
+	#UDP header length is 8 bytes
+	UDP_length = 8
+	
+	#parse the UDP header
+	UDP_header = packet[0:UDP_length]
+	
+	#							UDP HEADER
+	#0                   1                   2                   3
+	#0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|          Source Port          |       Destination Port        |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|          Length               |       Checksum                |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+	
+	#..............................DATA...............................
+	
+	#unpacking the UDP header
+	UDPh = struct.unpack('!HHHH', UDP_header)
+	
+	#Extract info
+	UDPh_source_port = UDPh[0]
+	UDPh_destination_port = UDPh[1]
+	UDPh_length = UDPh[2]
+	UDPh_checksum = UDPh[3]
+	
+	print 'Source Port : ' + str(UDPh_source_port) + ' Dest Port : ' + str(UDPh_destination_port) + ' Length : ' + str(UDP_length) + ' Checksum : ' + str(UDPh_checksum)
+	
+	#extract data
+	UDP_data = packet[UDP_length:]
+	
+	#print data for now
+	print 'Data : ' + UDP_data
+	
 def ICMP(packet):
 	#ICMP header length is 4 bytes
 	ICMP_length = 4
