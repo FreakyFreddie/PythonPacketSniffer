@@ -62,7 +62,11 @@ def extract_packet(sock):
 	#0                   1                   2                   3
 	#0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|				 Ethernet dest (last 32 bits)			     |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	#| Ethernet dest (last 16 bits)  |Ethernet source (first 16 bits)|
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|				 Ethernet source (last 32 bits)				     |
 	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	#|       VLAN (optional)		 |      	 EtherType			 |
 	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -160,8 +164,8 @@ def IPv4(packet):
 
 	#IPv4 protocols:
 	#hex            name            decimal
-	#0006           TCP                     6
-	#0011           UDP                     17
+	#0006           TCP             6
+	#0011           UDP             17
 	#0001           ICMP            1
 	#append list to listen in on other protocols
 	#IPv4 protocol number is an unsigned char
