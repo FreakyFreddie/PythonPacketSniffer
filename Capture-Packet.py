@@ -118,7 +118,7 @@ def IPv4(packet):
 	IPv4h_version_ihl = IPv4h[0]
 
 	#to get IPv4 version, shift 4 MSB 4 positions right
-	IPv4h_version = IPv4h_version_ihl >> 4
+	IPv4h_version = (IPv4h_version_ihl >> 4) & 0xF
 
 	#to get IPv4 internet header length, we need the 4 LSB
 	#ihl & 00001111
@@ -166,7 +166,7 @@ def IPv4(packet):
 		ICMP(packet)
 	
 def ARP(packet):
-	#ARP header length is 20 bytes
+	#ARP header length is 8 bytes
 	ARP_length = 8
 	
 	#parse the ARP header 
@@ -194,27 +194,26 @@ def ARP(packet):
 	#unpack ARP header
 	#H for hardware type (2bytes)
 	#H for protocol type (2bytes)
-	#B for Mac address length (1byte)
-	#B for protocol address length (1byte)
+	#H for Mac address length and protocol address length (2bytes)
 	#2s for operation (2bytes)
 
-	ARPh = struct.unpack('!HHBB2s', ARP_header)
+	ARPh = struct.unpack('!HHHH', ARP_header)
 	
 	#extract info
 	#network protocol/hardware type (ex. ethernet = 1)
 	ARPh_network_protocol = ARPh[0]
 	ARPh_protocol_type = ARPh[1]
-	ARPh_hardware_address_length = ARPh[2]
-	ARPh_protocol_address_length = ARPh[3]
-	ARPh_operation = ARPh[4]
+	ARPh_hardware_address_length = (ARPh[2] >> 8) & 0xF
+	ARPh_protocol_address_length = ARPh[2] & 0xF
+	ARPh_operation = ARPh[3]
 
-	#remove first 20 bytes from packet since we already unpacked them
+	#remove first 8 bytes from packet since we already unpacked them
 	packet = packet[ARP_length:]
 	
 	#unpack hardware address sender
 	#we need the length to unpack (ex MAC address is 6s)
 	ARP_hardware_address_sender = packet[0:ARPh_hardware_address_length]
-	unpack_format_hardware = str(ARPh_hardware_address_length) + 's'
+	unpack_format_hardware = '!' + str(ARPh_hardware_address_length) + 's'
 	ARPh_hardware_address_sender = struct.unpack(unpack_format_hardware, ARP_hardware_address_sender)
 	
 	#remove ARPh_hardware_address_length from packet since we already unpacked it
@@ -222,7 +221,7 @@ def ARP(packet):
 	
 	#unpack protocol address sender
 	ARP_protocol_address_sender = packet[0:ARPh_protocol_address_length]
-	unpack_format_protocol = str(ARPh_protocol_address_length) + 's'
+	unpack_format_protocol = '!' + str(ARPh_protocol_address_length) + 's'
 	ARPh_protocol_address_sender = struct.unpack(unpack_format_protocol, ARP_protocol_address_sender)
 	
 	#remove ARPh_protocol_address_length from packet since we already unpacked it
@@ -236,15 +235,33 @@ def ARP(packet):
 	packet = packet[ARPh_hardware_address_length:]
 	
 	#unpack protocol address target
-	ARP_protocol_address_target = packet[0:ARPh_protocol_address_target]
+	ARP_protocol_address_target = packet[0:ARPh_protocol_address_length]
 	ARPh_protocol_address_target = struct.unpack(unpack_format_protocol, ARP_protocol_address_target)
 	
 	#remove ARPh_protocol_address_length from packet since we already unpacked it
 	packet = packet[ARPh_protocol_address_length:]
 	
-	print 'ARP PACKET: '+ ARPh_network_protocol + '  ' + ARPh_protocol_type + '  ' + ARPh_protocol_address_length + '  ' + ARPh_protocol_address_length
-	print ARPh_operation + '  ' + ARPh_protocol_address_sender + '  ' + ARPh_protocol_address_target
-	print ARPh_hardware_address_sender + '  ' + ARPh_hardware_address_target
+	#Hardware address to correct format
+	#if we use ethernet address (MAC), we don't need the unpacked address
+	#MAC_address() function will do the conversion for us
+	if ARPh_network_protocol == 1:
+		ARPh_hardware_address_sender = MAC_address(ARP_hardware_address_sender)
+		ARPh_hardware_address_target = MAC_address(ARP_hardware_address_target)
+	else:
+		print 'Protocol type not supported'
+	
+	#Protocol address to correct format
+	#if we use IP address (IPv4), we don't need the unpacked address
+	#socket.inet_ntoa() function will do the conversion for us
+	if ARPh_protocol_type == 2048:
+		ARPh_protocol_address_sender = socket.inet_ntoa(ARP_protocol_address_sender)
+		ARPh_protocol_address_target = socket.inet_ntoa(ARP_protocol_address_target)
+	else:
+		print 'Protocol type not supported'
+	
+	print 'ARP PACKET: '+ str(ARPh_network_protocol) + '  ' + str(ARPh_protocol_type) + '  ' + str(ARPh_hardware_address_length) + '  ' + str(ARPh_protocol_address_length)
+	print str(ARPh_operation) + '  ' + str(ARPh_protocol_address_sender) + '  ' + str(ARPh_protocol_address_target)
+	print str(ARPh_hardware_address_sender) + '  ' + str(ARPh_hardware_address_target)
 	
 def IPv6(packet):
 	
