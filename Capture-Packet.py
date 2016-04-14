@@ -204,7 +204,7 @@ def IPv6(packet):
 #Transport Layer Protocols
 def TCP(packet):
 	#The length of the TCP header is 20 bytes
-	TCP_length = 32
+	TCP_length = 20
 	
 	#parse the TCP header
 	TCP_header = packet[0:TCP_length]
