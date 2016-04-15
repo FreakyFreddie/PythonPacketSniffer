@@ -234,7 +234,7 @@ def TCP(packet):
 	#H unpacking to unsigned short int
 	#L unpacking to unsigned long int (32bit)
 	#B unpacking to unsigned char
-	TCPh = struct.unpack('HHLLBBHHH', TCP_header)
+	TCPh = struct.unpack('!HHLLBBHHH', TCP_header)
 	
 	#extract info
 	TCP_source_port = TCPh[0]
