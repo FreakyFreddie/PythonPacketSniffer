@@ -53,9 +53,11 @@ def extract_packet(sock):
 	
 	#The length of the ethernet header is 14 bytes (layer 2 ethernet frame)
 	eth_length = 14
-
-	#First 14 bytes are ethernet header
+	
+	#we only need the unfiltered binary data
 	packet = packet[0]
+	
+	#First 14 bytes are ethernet header	
 	eth_header = packet[0:eth_length]
 
 	#							ETHERNET HEADER
@@ -147,7 +149,7 @@ def IPv4(packet):
 	IPv4h_version_ihl = IPv4h[0]
 
 	#to get IPv4 version, shift 4 MSB 4 positions right
-	IPv4h_version = IPv4h_version_ihl >> 4
+	IPv4h_version = (IPv4h_version_ihl >> 4) & 0xF
 
 	#to get IPv4 internet header length, we need the 4 LSB
 	#ihl & 00001111
@@ -197,9 +199,105 @@ def IPv4(packet):
 		print 'Protocol not supported.'
 	
 def ARP(packet):
+	#ARP header length is 8 bytes
+	ARP_length = 8
 	
+	#parse the ARP header 
+	ARP_header = packet[0:ARP_length]
+	
+	#							ARP HEADER
+	#0                   1                   2                   3
+	#0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	# 			Hardware type		 | 	  	  Protocol type 		 |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|MAC address len|Proto address l|            Operation          |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|  				  Sender hardware address    				 |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|            ...                |   Sender protocol address     |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	#|            ...                |   Target hardware address     |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+	#|                              ...                              |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+	#|   				   Target protocol address                   |
+	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
 
+	#unpack ARP header
+	#H for hardware type (2bytes)
+	#H for protocol type (2bytes)
+	#H for Mac address length and protocol address length (2bytes)
+	#2s for operation (2bytes)
+
+	ARPh = struct.unpack('!HHHH', ARP_header)
+	
+	#extract info
+	#network protocol/hardware type (ex. ethernet = 1)
+	ARPh_network_protocol = ARPh[0]
+	ARPh_protocol_type = ARPh[1]
+	ARPh_hardware_address_length = (ARPh[2] >> 8) & 0xF
+	ARPh_protocol_address_length = ARPh[2] & 0xF
+	ARPh_operation = ARPh[3]
+
+	#remove first 8 bytes from packet since we already unpacked them
+	packet = packet[ARP_length:]
+	
+	#unpack hardware address sender
+	#we need the length to unpack (ex MAC address is 6s)
+	ARP_hardware_address_sender = packet[0:ARPh_hardware_address_length]
+	unpack_format_hardware = '!' + str(ARPh_hardware_address_length) + 's'
+	ARPh_hardware_address_sender = struct.unpack(unpack_format_hardware, ARP_hardware_address_sender)
+	
+	#remove ARPh_hardware_address_length from packet since we already unpacked it
+	packet = packet[ARPh_hardware_address_length:]
+	
+	#unpack protocol address sender
+	ARP_protocol_address_sender = packet[0:ARPh_protocol_address_length]
+	unpack_format_protocol = '!' + str(ARPh_protocol_address_length) + 's'
+	ARPh_protocol_address_sender = struct.unpack(unpack_format_protocol, ARP_protocol_address_sender)
+	
+	#remove ARPh_protocol_address_length from packet since we already unpacked it
+	packet = packet[ARPh_protocol_address_length:]
+	
+	#unpack hardware address target
+	ARP_hardware_address_target = packet[0:ARPh_hardware_address_length]
+	ARPh_hardware_address_target = struct.unpack(unpack_format_hardware, ARP_hardware_address_target)
+	
+	#remove ARPh_hardware_address_length from packet since we already unpacked it
+	packet = packet[ARPh_hardware_address_length:]
+	
+	#unpack protocol address target
+	ARP_protocol_address_target = packet[0:ARPh_protocol_address_length]
+	ARPh_protocol_address_target = struct.unpack(unpack_format_protocol, ARP_protocol_address_target)
+	
+	#remove ARPh_protocol_address_length from packet since we already unpacked it
+	packet = packet[ARPh_protocol_address_length:]
+	
+	#Hardware address to correct format
+	#if we use ethernet address (MAC), we don't need the unpacked address
+	#MAC_address() function will do the conversion for us
+	if ARPh_network_protocol == 1:
+		ARPh_hardware_address_sender = MAC_address(ARP_hardware_address_sender)
+		ARPh_hardware_address_target = MAC_address(ARP_hardware_address_target)
+	else:
+		print 'Protocol type not supported'
+	
+	#Protocol address to correct format
+	#if we use IP address (IPv4), we don't need the unpacked address
+	#socket.inet_ntoa() function will do the conversion for us
+	if ARPh_protocol_type == 2048:
+		ARPh_protocol_address_sender = socket.inet_ntoa(ARP_protocol_address_sender)
+		ARPh_protocol_address_target = socket.inet_ntoa(ARP_protocol_address_target)
+	else:
+		print 'Protocol type not supported'
+	
+	print 'ARP PACKET: '+ str(ARPh_network_protocol) + '  ' + str(ARPh_protocol_type) + '  ' + str(ARPh_hardware_address_length) + '  ' + str(ARPh_protocol_address_length)
+	print str(ARPh_operation) + '  ' + str(ARPh_protocol_address_sender) + '  ' + str(ARPh_protocol_address_target)
+	print str(ARPh_hardware_address_sender) + '  ' + str(ARPh_hardware_address_target)
+	
 def IPv6(packet):
+	
 	
 #Transport Layer Protocols
 def TCP(packet):
