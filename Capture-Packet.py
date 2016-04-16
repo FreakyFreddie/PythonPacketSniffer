@@ -1,4 +1,5 @@
 #THIS CODE CAPTURES NETWORK PACKETS
+#Only works for LINUX systems
 
 #Socket library - neccessary to set up and extract data from sockets
 import socket
@@ -70,7 +71,7 @@ def extract_packet(sock):
 	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	#|				 Ethernet source (last 32 bits)				     |
 	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	#|       VLAN (optional)		 |      	 EtherType			 |
+	#|       VLAN (optional-32bits)		 |      	 EtherType		 |
 	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 		
 	#Unpack eth_header string according to the given format !6s6sH
@@ -87,6 +88,34 @@ def extract_packet(sock):
 	#ntohs switches network byte order to host byte order
 	#should any byte order problems occur, try implementing the ntohs function
 	eth_protocol = eth[2]
+	
+	#VLAN counter
+	VLAN_number = 0
+	
+	#check if VLAN tag is present
+	while eth_protocol == 33024:
+		#VLAN tag structure:
+		#16 bits Tag Protocol Identifier (TPID) = 0x8100 or 33024
+		#3 bits Priority Code Point (PCP)
+		#1 bit Drop Eligible Indicator (DEI)
+		#12 bit VLAN Identifier (VID)
+		#Ethernet header grows bigger by 32 bits
+		#parse VLAN tag (4bytes, eth_protocol included in the last 2 bytes)
+		VLAN_tag_data = packet[eth_length:eth_length+4]
+		
+		#unpack VLAN tag
+		VLANt = struct.unpack('!HH', VLAN_tag_data)
+		
+		VLANt_PCP = VLANt[0] >> 13 #nog bitmasken
+		VLANt_DEI = VLANt[0] >> 12 #nog bitmasken
+		VLANt_VID = VLANt[0] & #nog bitmasken
+		
+		eth_length += 4
+		eth_protocol = VLANt[1]
+		
+		#number of VLAN tags depends on the number of VLAN frames
+		VLAN_number += 1
+		
 
 	#write MAC addresses to file
 	print 'Destination MAC : ' + MAC_address(packet[0:6]) + ' Source MAC : ' + MAC_address(packet[6:12]) + ' Protocol : ' + str(eth_protocol)
