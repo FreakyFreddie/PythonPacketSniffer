@@ -96,8 +96,8 @@ def extract_packet(sock):
 	while eth_protocol == 33024:
 		#VLAN tag structure:
 		#16 bits Tag Protocol Identifier (TPID) = 0x8100 or 33024
-		#3 bits Priority Code Point (PCP)
-		#1 bit Drop Eligible Indicator (DEI)
+		#3 bits Priority Code Point (PCP)  --> priority of package
+		#1 bit Drop Eligible Indicator (DEI) --> indicates if frame can be dropped in case of congestion
 		#12 bit VLAN Identifier (VID)
 		#Ethernet header grows bigger by 32 bits
 		#parse VLAN tag (4bytes, eth_protocol included in the last 2 bytes)
@@ -106,16 +106,25 @@ def extract_packet(sock):
 		#unpack VLAN tag
 		VLANt = struct.unpack('!HH', VLAN_tag_data)
 		
-		VLANt_PCP = VLANt[0] >> 13 #nog bitmasken
-		VLANt_DEI = VLANt[0] >> 12 #nog bitmasken
-		VLANt_VID = VLANt[0] & #nog bitmasken
+		#bitmask 0000 0000 0000 0111
+		VLANt_PCP = (VLANt[0] >> 13) & 0x7
 		
+		#bitmask 0000 0000 0000 0001
+		VLANt_DEI = (VLANt[0] >> 12) & 0x1
+		
+		#bitmask 0000 1111 1111 1111
+		VLANt_VID = VLANt[0] & 0xFFF
+		
+		#VLAN tag adds 4 bytes
 		eth_length += 4
+		
+		#EtherType is in the last 2 bytes
 		eth_protocol = VLANt[1]
 		
 		#number of VLAN tags depends on the number of VLAN frames
 		VLAN_number += 1
 		
+		#Print the VLAN tag
 
 	#write MAC addresses to file
 	print 'Destination MAC : ' + MAC_address(packet[0:6]) + ' Source MAC : ' + MAC_address(packet[6:12]) + ' Protocol : ' + str(eth_protocol)
