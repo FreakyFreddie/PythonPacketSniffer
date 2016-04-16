@@ -296,9 +296,6 @@ def ARP(packet):
 	print str(ARPh_operation) + '  ' + str(ARPh_protocol_address_sender) + '  ' + str(ARPh_protocol_address_target)
 	print str(ARPh_hardware_address_sender) + '  ' + str(ARPh_hardware_address_target)
 	
-def IPv6(packet):
-	
-	
 #Transport Layer Protocols
 def TCP(packet):
 	#The length of the TCP header is 20 bytes
@@ -420,7 +417,6 @@ def ICMP(packet):
 	#print data for now
 	print 'Data : ' + ICMP_data
 	
-
-#while True:
-#        sock=create_socket()
-#        extract_packet(sock)
+sock=create_socket()
+while True:
+        extract_packet(sock)
