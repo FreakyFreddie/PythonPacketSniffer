@@ -94,6 +94,9 @@ def extract_packet(sock):
 	
 	#check if VLAN tag is present
 	while eth_protocol == 33024:
+		#Announce VLAN information
+		print 'VLAN information: '
+		
 		#VLAN tag structure:
 		#16 bits Tag Protocol Identifier (TPID) = 0x8100 or 33024
 		#3 bits Priority Code Point (PCP)  --> priority of package
@@ -125,7 +128,8 @@ def extract_packet(sock):
 		VLAN_number += 1
 		
 		#Print the VLAN tag
-
+		print 'VLAN tag number: ' + str(VLAN_number) + ' VLAN id: ' + str(VLANt_VID) + ' Droppable? ' + str(VLANt_DEI) + ' Priority level: ' + str(VLANt_PCP)
+		
 	#write MAC addresses to file
 	print 'Destination MAC : ' + MAC_address(packet[0:6]) + ' Source MAC : ' + MAC_address(packet[6:12]) + ' Protocol : ' + str(eth_protocol)
 
