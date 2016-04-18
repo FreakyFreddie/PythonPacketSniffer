@@ -10,6 +10,9 @@ import struct
 #Sys library - neccessary for exit() and other sys functions
 import sys
 
+#csv library - neccessary to read the protocol files (convert protocol number to text)
+import csv
+
 #Date library - needed for the errorlog
 from datetime import datetime
 
@@ -67,18 +70,32 @@ class _Packet:
 		#extract header from Data Link Layer (OSI)
 		self.DataLinkHeader = extract_ethernetheader(self.Content)
 		
-		#convert Network Protocol to readable text
-		Self.NetworkProtocol = convert_NetworkProtocol(self.DataLinkHeader.Protocol)
+		#Network layer Protocol in hex (int)
+		self.HexNetworkProtocol = self.DataLinkHeader.Protocol
 		
-		#extract network header based on DataLink protocol
-		self.NetworkHeader = extract_NetworkHeader(self.Content, self.DataLinkHeader.Protocol)
+		#Network layer Protocol in readable text
+		self.NetworkProtocol = convert_networkprotocol(self.HexNetworkProtocol)
+		
+		#extract network layer header based on DataLink protocol
+		self.NetworkHeader = extract_networkheader(self.Content, self.DataLinkHeader.Protocol, self.DataLinkHeader.Length)
+		
+		#Transport layer protocol in hex (int)
+		self.HexTransportProtocol = self.NetworkHeader.Protocol
+		
+		#convert transport layer protocol to readable text
+		self.TransportProtocol = convert_transportprotocol(self.HexTransportProtocol)
+		
+		#extract transport layer header
+		self.TransportProtocol = extract_transportheader(self.Content, self.NetworkHeader.Protocol, self.DataLinkHeader.Length, self.Networkheader.Length)
 		
 class _EthernetHeader: 
 	def __init__(self):
+		#standard Ethernet header length
+		self.Length = 14
 		self.SourceMAC = None
 		self.DestinationMAC = None
 		self.Protocol = None
-		self.Length = None
+		self.payload = None
 		
 		#default no VLAN present
 		self.VLANCount = 0
@@ -94,17 +111,52 @@ class _VLANTag:
 		self.PCP = None
 		self.DEI = None
 
-class _ARPHeader:
-	
-
 class _IPv4Header:
-	
-def extract_ethernetheader(packet):
-	#create Ethernet_Header object
-	EthClass = _EthernetHeader()
+	def __init__(self):
+		#standard IPv4 header length
+		self.Length = 20
+		self.Protocol = None
+		self.Version = 4
+		self.IHL = None
+		self.TTL = None
+		self.SourceAddress = None
+		self.DestinationAddress = None
 
-	#The usual length of the ethernet header is 14 bytes (layer 2 ethernet frame)
-	EthClass.Length = 14
+class _ARPHeader:
+	def __init__(self):
+		self.Length = 8
+		self.Protocol = None
+		self.DataLinkProtocol = None
+		self.NetworkProtocol = None
+		self.HardwareAddressLength = None
+		self.ProtocolAddressLength = None
+		self.Operation = None
+		self.HardwareAddressSender = None
+		self.ProtocolAddressSender = None
+		self.HardwareAddressTarget = None
+		self.ProtocolAddressTarget = None
+
+class _IPv6Header:
+	def __init__(self):
+		self.Length
+		self.Protocol
+
+class _TCPHeader:
+	def __init__(self):
+			self.
+
+class _UDPHeader:
+	def __init__(self):
+			self.
+
+class _ICMPHeader:
+	def __init__(self):
+			self.
+
+
+def extract_ethernetheader(packet):
+	#create _EthernetHeader object
+	EthClass = _EthernetHeader()
 	
 	#First 14 bytes are ethernet header	
 	eth_header = packet[0:EthClass.length]
@@ -135,7 +187,12 @@ def extract_ethernetheader(packet):
 	#we need to swap the bytes on those systems to get a uniform result
 	#ntohs switches network byte order to host byte order
 	#should any byte order problems occur, try implementing the ntohs function
-	EthClass.Protocol = eth[2]
+	#eth_protocol 1500 or less? The number is the size of ethernet frame payload
+	#above 1500 indicates ethernet II frame
+	if eth[2]>1500:
+		EthClass.Protocol = eth[2]
+	else
+		EthClass.Payload = eth[2]
 	
 	#extract all VLANs if present
 	EthClass = extract_VLAN(EthClass, packet)
@@ -144,31 +201,11 @@ def extract_ethernetheader(packet):
 	EthClass.DestinationMAC = MAC_address(packet[0:6])
 	EthClass.SourceMAC = MAC_address(packet[6:12])
 	
-	#eth_protocol 1500 or less? The number is the size of ethernet frame payload
-	#above 1500 indicates ethernet II frame
-	if eth_protocol <= 1500:
-		print ' payload = ' + str(eth_protocol)
-		print ' Protocols not supported '
-
-	#ethertypes:
-	#hex            name            decimal
-	#0800           IPv4            2048
-	#0806           ARP             2054
-	#86DD           IPv6            34525
-	#append list to listen in on other protocols
-	elif eth_protocol == 2048:
-			IPv4(packet)
-	elif eth_protocol == 2054:
-			ARP(packet)
-	elif eth_protocol == 34525:
-			IPv6(packet)
-	else:
-		print 'Protocol not supported.'
-
+	return EthClass
 
 def extract_VLAN(EthClass, packet)
 	while EthClass.Protocol == 33024:	
-		#create VLANTag object
+		#create _VLANTag object
 		VLANClass = _VLANTag()
 		
 		#VLAN tag structure:
@@ -205,18 +242,48 @@ def extract_VLAN(EthClass, packet)
 		EthClass.VLANCount += 1
 	
 	return EthClass
-#Datalink Layer Protocol [only ETHERNET supported]
 
-	
-	
+def convert_networkprotocol(network_protocol):
+	#open the csv file with Datalink_protocols
+	with open('Network_protocols.csv') as csvfile:
+		
+		#read fine in dictionary
+		reader = csv.DictReader(csvfile)
+		
+		#check compare network_protocol code to codes from file
+		for row in reader:
+		
+			#return protocol in text
+			if int(row['hexcode'], 16) == network_protocol:
+				return row['protocolname']
+
+def extract_networkheader(packet, datalink_protocol, datalink_length):
+	#ethertypes:
+	#hex            name            decimal
+	#0800           IPv4            2048
+	#0806           ARP             2054
+	#86DD           IPv6            34525
+	#append list to listen in on other protocols
+	if datalink_protocol = 2048:
+		NetwClass = extract_IPv4header(packet, datalink_length)
+		return NetwClass
+	elif datalink_protocol = 2054:
+		NetwClass = extract_ARPheader(packet, datalink_length)
+		return NetwClass
+	elif datalink_protocol = 34525:
+		NetwClass = extract_IPv6header(packet, datalink_length)
+		return NetwClass
+	else:
+		NetwClass = 'Network protocol not supported.'
+		return NetwClass
 
 #Network Layer Protocols
-def IPv4(packet):
-	#The length of the IPv4 header is 20 bytes
-	IPv4_length = 20
+def extract_IPv4header(packet, datalink_length):
+	#create _IPv4Header object
+	IPv4Class = _IPv4Header()
 
 	#parse the IPv4 header (first 20 characters after ethernet header)
-	IPv4_header = packet[0:IPv4_length]
+	IPv4_header = packet[datalink_length:datalink_length+IPv4Class.length]
 
 	#							IPv4 HEADER
 	#0                   1                   2                   3
@@ -244,20 +311,20 @@ def IPv4(packet):
 	IPv4h_version_ihl = IPv4h[0]
 
 	#to get IPv4 version, shift 4 MSB 4 positions right
-	IPv4h_version = (IPv4h_version_ihl >> 4) & 0xF
+	IPv4Class.Version = (IPv4h_version_ihl >> 4) & 0xF
 
 	#to get IPv4 internet header length, we need the 4 LSB
 	#ihl & 00001111
-	IPv4h_ihl = IPv4h_version_ihl & 0xF
+	IPv4Class.IHL = IPv4h_version_ihl & 0xF
 
 	#ihl is the number if 32bit words in the header
 	#IPv4h_length is in bytes (*4)
-	IPv4h_length = IPv4h_ihl * 4
+	IPv4Class.Length = IPv4Class.IHL * 4
 
 	#IPv4_ttl is unpacked on 6th position
 	#B(1byte) B(1byte) H(2bytes) H(2bytes) H(2bytes) B(1byte)
 	#TTL = last B
-	IPv4h_ttl = IPv4h[5]
+	IPv4Class.TTL = IPv4h[5]
 
 	#IPv4 protocols:
 	#hex            name            decimal
@@ -266,39 +333,21 @@ def IPv4(packet):
 	#0001           ICMP            1
 	#append list to listen in on other protocols
 	#IPv4 protocol number is an unsigned char
-	IPv4h_protocol = IPv4h[6]
+	IPv4Class.Protocol = IPv4h[6]
 
 	#convert packed source and destination IPv4 address to correct format
 	#4s 4s was used to unpack
-	IPv4h_source_address = socket.inet_ntoa(IPv4h[8])
-	IPv4h_destination_address = socket.inet_ntoa(IPv4h[9])
-
-	print 'Version : ' + str(IPv4h_version) + ' IP Header Length : ' + str(IPv4h_ihl) + ' TTL : ' + str(IPv4h_ttl) + ' Protocol: ' + str(IPv4h_protocol) + ' Source IP: ' + str(IPv4h_source_address) + ' Destination IP: ' + str(IPv4h_destination_address)
-
-	#remove IPv4 header from packet
-	packet = packet[IPv4_length:]
+	IPv4Class.SourceAddress = socket.inet_ntoa(IPv4h[8])
+	IPv4Class.DestinationAddress = socket.inet_ntoa(IPv4h[9])
 	
-	#IPv4 protocols:
-	#hex		name		decimal
-	#0006		TCP			6
-	#0011		UDP			17
-	#0001		ICMP		1
-	#append list to listen in on other protocols
-	if IPv4h_protocol == 6:
-		TCP(packet)
-	elif IPv4h_protocol == 17:
-		UDP(packet)
-	elif IPv4h_protocol == 1:
-		ICMP(packet)
-	else:
-		print 'Protocol not supported.'
+	return IPv4Class
 	
-def ARP(packet):
-	#ARP header length is 8 bytes
-	ARP_length = 8
+def extract_ARPheader(packet, datalink_length):
+	#create _IPv4Header object
+	ARPClass = _ARPHeader()
 	
 	#parse the ARP header 
-	ARP_header = packet[0:ARP_length]
+	ARP_header = packet[datalink_length:datalink_length+ARPClass.Length]
 	
 	#							ARP HEADER
 	#0                   1                   2                   3
@@ -329,54 +378,57 @@ def ARP(packet):
 	
 	#extract info
 	#network protocol/hardware type (ex. ethernet = 1)
-	ARPh_network_protocol = ARPh[0]
-	ARPh_protocol_type = ARPh[1]
-	ARPh_hardware_address_length = (ARPh[2] >> 8) & 0xF
-	ARPh_protocol_address_length = ARPh[2] & 0xF
-	ARPh_operation = ARPh[3]
-
-	#remove first 8 bytes from packet since we already unpacked them
-	packet = packet[ARP_length:]
+	ARPClass.DataLinkProtocol = ARPh[0]
+	ARPClass.NetworkProtocol = ARPh[1]
+	ARPClass.HardwareAddressLength = (ARPh[2] >> 8) & 0xF
+	ARPClass.ProtocolAddressLength = ARPh[2] & 0xF
+	ARPClass.Operation = ARPh[3]
+	
+	#temporary length var to avoid long sums
+	ARPClass.length += datalink_length
 	
 	#unpack hardware address sender
 	#we need the length to unpack (ex MAC address is 6s)
-	ARP_hardware_address_sender = packet[0:ARPh_hardware_address_length]
-	unpack_format_hardware = '!' + str(ARPh_hardware_address_length) + 's'
-	ARPh_hardware_address_sender = struct.unpack(unpack_format_hardware, ARP_hardware_address_sender)
+	ARP_hardware_address_sender = packet[ARPClass.length:ARPClass.length+ARPClass.HardwareAddressLength]
+	unpack_format_hardware = '!' + str(ARPClass.HardwareAddressLength) + 's'
+	ARPClass.HardwareAddressSender = struct.unpack(unpack_format_hardware, ARP_hardware_address_sender)
 	
-	#remove ARPh_hardware_address_length from packet since we already unpacked it
-	packet = packet[ARPh_hardware_address_length:]
+	#temporary length var to avoid long sums
+	ARPClass.length += ARPClass.HardwareAddressLength
 	
 	#unpack protocol address sender
-	ARP_protocol_address_sender = packet[0:ARPh_protocol_address_length]
+	ARP_protocol_address_sender = packet[ARPClass.length:ARPClass.length+ARPClass.ProtocolAddressLength]
 	unpack_format_protocol = '!' + str(ARPh_protocol_address_length) + 's'
-	ARPh_protocol_address_sender = struct.unpack(unpack_format_protocol, ARP_protocol_address_sender)
+	ARPClass.ProtocolAddressSender = struct.unpack(unpack_format_protocol, ARP_protocol_address_sender)
 	
-	#remove ARPh_protocol_address_length from packet since we already unpacked it
-	packet = packet[ARPh_protocol_address_length:]
+	#temporary length var to avoid long sums
+	ARPClass.length += ARPClass.ProtocolAddressLength
 	
 	#unpack hardware address target
-	ARP_hardware_address_target = packet[0:ARPh_hardware_address_length]
-	ARPh_hardware_address_target = struct.unpack(unpack_format_hardware, ARP_hardware_address_target)
+	ARP_hardware_address_target = packet[ARPClass.length:ARPClass.length+ARPClass.HardwareAddressLength]
+	ARPClass.HardwareAddressTarget = struct.unpack(unpack_format_hardware, ARP_hardware_address_target)
 	
-	#remove ARPh_hardware_address_length from packet since we already unpacked it
-	packet = packet[ARPh_hardware_address_length:]
+	#temporary length var to avoid long sums
+	ARPClass.length += ARPClass.HardwareAddressLength
 	
 	#unpack protocol address target
-	ARP_protocol_address_target = packet[0:ARPh_protocol_address_length]
-	ARPh_protocol_address_target = struct.unpack(unpack_format_protocol, ARP_protocol_address_target)
+	ARP_protocol_address_target = packet[ARPClass.length:ARPClass.length+ARPClass.ProtocolAddressLength]
+	ARPClass.ProtocolAddressTarget = struct.unpack(unpack_format_protocol, ARP_protocol_address_target)
 	
-	#remove ARPh_protocol_address_length from packet since we already unpacked it
-	packet = packet[ARPh_protocol_address_length:]
+	#temporary length var to avoid long sums
+	ARPClass.length += ARPClass.ProtocolAddressLength
+	
+	#final length of the ARP header
+	ARPClass.length -= datalink_length
 	
 	#Hardware address to correct format
 	#if we use ethernet address (MAC), we don't need the unpacked address
 	#MAC_address() function will do the conversion for us
 	if ARPh_network_protocol == 1:
-		ARPh_hardware_address_sender = MAC_address(ARP_hardware_address_sender)
-		ARPh_hardware_address_target = MAC_address(ARP_hardware_address_target)
-	else:
-		print 'Protocol type not supported'
+		ARPClass.HardwareAddressSender = MAC_address(ARP_hardware_address_sender)
+		ARPClass.HardwareAddressTarget = MAC_address(ARP_hardware_address_target)
+	else
+		print 'ARP hardware protocol type not supported'
 	
 	#Protocol address to correct format
 	#if we use IP address (IPv4), we don't need the unpacked address
@@ -385,12 +437,41 @@ def ARP(packet):
 		ARPh_protocol_address_sender = socket.inet_ntoa(ARP_protocol_address_sender)
 		ARPh_protocol_address_target = socket.inet_ntoa(ARP_protocol_address_target)
 	else:
-		print 'Protocol type not supported'
+		print 'ARP network protocol type not supported'
 	
-	print 'ARP PACKET: '+ str(ARPh_network_protocol) + '  ' + str(ARPh_protocol_type) + '  ' + str(ARPh_hardware_address_length) + '  ' + str(ARPh_protocol_address_length)
-	print str(ARPh_operation) + '  ' + str(ARPh_protocol_address_sender) + '  ' + str(ARPh_protocol_address_target)
-	print str(ARPh_hardware_address_sender) + '  ' + str(ARPh_hardware_address_target)
+	return ARPClass
+
+def extract_IPv6header(packet, datalink_length):
 	
+	
+def convert_transportprotocol(transport_protocol):
+	#open the csv file with Datalink_protocols
+	with open('Transport_protocols.csv') as csvfile:
+		
+		#read fine in dictionary
+		reader = csv.DictReader(csvfile)
+		
+		#check compare transport_protocol code to codes from file
+		for row in reader:
+		
+			#return protocol in text
+			if int(row['hexcode'], 16) == transport_protocol:
+				return row['abbreviation']
+
+def extract_transportheader(packet, network_protocol, datalink_length, network_length)
+	if network_protocol = 6:
+		TranClass = extract_TCPheader(packet, datalink_length)
+		return TranClass
+	elif network_protocol = 17:
+		TranClass = extract_UDPheader(packet, datalink_length)
+		return TranClass
+	elif network_protocol = 1:
+		TranClass = extract_ICMPheader(packet, datalink_length)
+		return TranClass
+	else:
+		TranClass = 'Transport protocol not supported.'
+		return TranClass
+
 #Transport Layer Protocols
 def TCP(packet):
 	#The length of the TCP header is 20 bytes
