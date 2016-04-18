@@ -31,17 +31,7 @@ def create_socket():
 		errorlog.close
 		sys.exit()
 
-#MAC address structure
-#% indicates we want to format everything between parentheses
-#.2 indicates that we always want a minimum of 2 hex numbers before each colon
-#x indicates the Signed hexadecimal (lowercase) format
-#ord() returns an integer representing the unicode point of the string character
-def MAC_address(packet):
-	MAC = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x" % (ord(packet[0]), ord(packet[1]), ord(packet[2]), ord(packet[3]), ord(packet[4]), ord(packet[5]))
-	return MAC
-
-#Datalink Layer Protocol [only ETHERNET supported]
-#Extracting packets from socket
+#Extracting packet from socket
 def extract_packet(sock):
 	#packetlog = open('packetlog.txt', 'a')
 
@@ -52,14 +42,72 @@ def extract_packet(sock):
 	#debug
 	print packet
 	
-	#The length of the ethernet header is 14 bytes (layer 2 ethernet frame)
-	eth_length = 14
+	#create Packet object
+	PacketClass = _Packet(packet[0])
 	
-	#we only need the unfiltered binary data
-	packet = packet[0]
+	return PacketClass
+		
+#MAC address structure
+#% indicates we want to format everything between parentheses
+#.2 indicates that we always want a minimum of 2 hex numbers before each colon
+#x indicates the Signed hexadecimal (lowercase) format
+#ord() returns an integer representing the unicode point of the string character
+def MAC_address(packet):
+	MAC = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x" % (ord(packet[0]), ord(packet[1]), ord(packet[2]), ord(packet[3]), ord(packet[4]), ord(packet[5]))
+	return MAC
+	
+class _Packet:
+	def __init__(self, packet):
+		#packet length in bytes
+		self.Length = len(packet)
+		
+		#we only need the unfiltered binary data
+		self.Content = packet
+		
+		#extract header from Data Link Layer (OSI)
+		self.DataLinkHeader = extract_ethernetheader(self.Content)
+		
+		#convert Network Protocol to readable text
+		Self.NetworkProtocol = convert_NetworkProtocol(self.DataLinkHeader.Protocol)
+		
+		#extract network header based on DataLink protocol
+		self.NetworkHeader = extract_NetworkHeader(self.Content, self.DataLinkHeader.Protocol)
+		
+class _EthernetHeader: 
+	def __init__(self):
+		self.SourceMAC = None
+		self.DestinationMAC = None
+		self.Protocol = None
+		self.Length = None
+		
+		#default no VLAN present
+		self.VLANCount = 0
+		self.VLAN = []
+		
+	def add_VLAN(self, VLAN):
+		#add VLAN information on correct position
+		self.VLAN.append(VLAN)
+	
+class _VLANTag:
+	def __init__(self):
+		self.TPID = None
+		self.PCP = None
+		self.DEI = None
+
+class _ARPHeader:
+	
+
+class _IPv4Header:
+	
+def extract_ethernetheader(packet):
+	#create Ethernet_Header object
+	EthClass = _EthernetHeader()
+
+	#The usual length of the ethernet header is 14 bytes (layer 2 ethernet frame)
+	EthClass.Length = 14
 	
 	#First 14 bytes are ethernet header	
-	eth_header = packet[0:eth_length]
+	eth_header = packet[0:EthClass.length]
 
 	#							ETHERNET HEADER
 	#0                   1                   2                   3
@@ -87,54 +135,14 @@ def extract_packet(sock):
 	#we need to swap the bytes on those systems to get a uniform result
 	#ntohs switches network byte order to host byte order
 	#should any byte order problems occur, try implementing the ntohs function
-	eth_protocol = eth[2]
+	EthClass.Protocol = eth[2]
 	
-	#VLAN counter
-	VLAN_number = 0
+	#extract all VLANs if present
+	EthClass = extract_VLAN(EthClass, packet)
 	
-	#check if VLAN tag is present
-	while eth_protocol == 33024:
-		#Announce VLAN information
-		print 'VLAN information: '
-		
-		#VLAN tag structure:
-		#16 bits Tag Protocol Identifier (TPID) = 0x8100 or 33024
-		#3 bits Priority Code Point (PCP)  --> priority of package
-		#1 bit Drop Eligible Indicator (DEI) --> indicates if frame can be dropped in case of congestion
-		#12 bit VLAN Identifier (VID)
-		#Ethernet header grows bigger by 32 bits
-		#parse VLAN tag (4bytes, eth_protocol included in the last 2 bytes)
-		VLAN_tag_data = packet[eth_length:eth_length+4]
-		
-		#unpack VLAN tag
-		VLANt = struct.unpack('!HH', VLAN_tag_data)
-		
-		#bitmask 0000 0000 0000 0111
-		VLANt_PCP = (VLANt[0] >> 13) & 0x7
-		
-		#bitmask 0000 0000 0000 0001
-		VLANt_DEI = (VLANt[0] >> 12) & 0x1
-		
-		#bitmask 0000 1111 1111 1111
-		VLANt_VID = VLANt[0] & 0xFFF
-		
-		#VLAN tag adds 4 bytes
-		eth_length += 4
-		
-		#EtherType is in the last 2 bytes
-		eth_protocol = VLANt[1]
-		
-		#number of VLAN tags depends on the number of VLAN frames
-		VLAN_number += 1
-		
-		#Print the VLAN tag
-		print 'VLAN tag number: ' + str(VLAN_number) + ' VLAN id: ' + str(VLANt_VID) + ' Droppable? ' + str(VLANt_DEI) + ' Priority level: ' + str(VLANt_PCP)
-		
-	#write MAC addresses to file
-	print 'Destination MAC : ' + MAC_address(packet[0:6]) + ' Source MAC : ' + MAC_address(packet[6:12]) + ' Protocol : ' + str(eth_protocol)
-
-	#remove ethernet header from packet
-	packet = packet[eth_length:]
+	#add source and destination MAC
+	EthClass.DestinationMAC = MAC_address(packet[0:6])
+	EthClass.SourceMAC = MAC_address(packet[6:12])
 	
 	#eth_protocol 1500 or less? The number is the size of ethernet frame payload
 	#above 1500 indicates ethernet II frame
@@ -156,6 +164,51 @@ def extract_packet(sock):
 			IPv6(packet)
 	else:
 		print 'Protocol not supported.'
+
+
+def extract_VLAN(EthClass, packet)
+	while EthClass.Protocol == 33024:	
+		#create VLANTag object
+		VLANClass = _VLANTag()
+		
+		#VLAN tag structure:
+		#16 bits Tag Protocol Identifier (TPID) = 0x8100 or 33024
+		#3 bits Priority Code Point (PCP)  --> priority of package
+		#1 bit Drop Eligible Indicator (DEI) --> indicates if frame can be dropped in case of congestion
+		#12 bit VLAN Identifier (VID)
+		#Ethernet header grows bigger by 32 bits
+		#parse VLAN tag (4bytes, eth_protocol included in the last 2 bytes)
+		VLAN_tag_data = packet[EthClass.Length:EthClass.Length+4]
+		
+		#unpack VLAN tag
+		VLANt = struct.unpack('!HH', VLAN_tag_data)
+		
+		#bitmask 0000 0000 0000 0111
+		VLANClass.PCP = (VLANt[0] >> 13) & 0x7
+		
+		#bitmask 0000 0000 0000 0001
+		VLANClass.DEI = (VLANt[0] >> 12) & 0x1
+		
+		#bitmask 0000 1111 1111 1111
+		VLANClass.VID = VLANt[0] & 0xFFF
+		
+		#add the VLAN to the object
+		EthClass.add_VLAN(VLANClass)
+		
+		#VLAN tag adds 4 bytes
+		EthClass.Length += 4
+		
+		#EtherType is in the last 2 bytes
+		EthClass.Protocol = VLANt[1]
+		
+		#number of VLAN tags depends on the number of VLAN frames
+		EthClass.VLANCount += 1
+	
+	return EthClass
+#Datalink Layer Protocol [only ETHERNET supported]
+
+	
+	
 
 #Network Layer Protocols
 def IPv4(packet):
