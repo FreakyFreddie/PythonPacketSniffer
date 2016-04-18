@@ -143,16 +143,29 @@ class _IPv6Header:
 
 class _TCPHeader:
 	def __init__(self):
-			self.
+		self.Length = 20
+		self.SourcePort = None
+		self.DestinationPort = None
+		self.Sequence = None
+		self.Acknowledgement = None
+		self.DataOffsetReserved = None
+		self.Data = None
 
 class _UDPHeader:
 	def __init__(self):
-			self.
+		self.Length = 8
+		self.SourcePort = None
+		self.DestinationPort = None
+		self.Checksum = None
+		self.Data = None
 
 class _ICMPHeader:
 	def __init__(self):
-			self.
-
+		self.Length = 4
+		self.Type = None
+		self.Code = None
+		self.Checksum = None
+		self.Data = None
 
 def extract_ethernetheader(packet):
 	#create _EthernetHeader object
@@ -343,7 +356,7 @@ def extract_IPv4header(packet, datalink_length):
 	return IPv4Class
 	
 def extract_ARPheader(packet, datalink_length):
-	#create _IPv4Header object
+	#create _ARPHeader object
 	ARPClass = _ARPHeader()
 	
 	#parse the ARP header 
@@ -459,26 +472,29 @@ def convert_transportprotocol(transport_protocol):
 				return row['abbreviation']
 
 def extract_transportheader(packet, network_protocol, datalink_length, network_length)
+	#we need the length of the previous headers combined
+	combi_length = datalink_length + network_length
+	
 	if network_protocol = 6:
-		TranClass = extract_TCPheader(packet, datalink_length)
+		TranClass = extract_TCPheader(packet, combi_length)
 		return TranClass
 	elif network_protocol = 17:
-		TranClass = extract_UDPheader(packet, datalink_length)
+		TranClass = extract_UDPheader(packet, combi_length)
 		return TranClass
 	elif network_protocol = 1:
-		TranClass = extract_ICMPheader(packet, datalink_length)
+		TranClass = extract_ICMPheader(packet, combi_length)
 		return TranClass
 	else:
 		TranClass = 'Transport protocol not supported.'
 		return TranClass
 
 #Transport Layer Protocols
-def TCP(packet):
-	#The length of the TCP header is 20 bytes
-	TCP_length = 20
+def extract_TCPheader(packet, previous_length):
+	#create _TCPHeader object
+	TCPClass = _TCPHeader()
 	
 	#parse the TCP header
-	TCP_header = packet[0:TCP_length]
+	TCP_header = packet[previous_length:TCPClass.Length + previous_length]
 	
 	#							TCP HEADER
 	#0                   1                   2                   3
@@ -508,31 +524,28 @@ def TCP(packet):
 	TCPh = struct.unpack('!HHLLBBHHH', TCP_header)
 	
 	#extract info
-	TCP_source_port = TCPh[0]
-	TCP_destination_port = TCPh[1]
-	TCP_sequence = TCPh[2]
-	TCP_acknowledgement = TCPh[3]
-	TCP_Data_Offset_reserved = TCPh[4]
+	TCPClass.SourcePort = TCPh[0]
+	TCPClass.DestinationPort = TCPh[1]
+	TCPClass.Sequence = TCPh[2]
+	TCPClass.Acknowledgement = TCPh[3]
+	TCPClass.DataOffsetReserved = TCPh[4]
 	
 	#extract TCP length in bytes
 	#options & padding may vary
-	TCPh_length = TCP_Data_Offset_reserved >> 4
-	TCPh_length = TCPh_length * 4
-
-	print 'Source Port : ' + str(TCP_source_port) + ' Dest Port : ' + str(TCP_destination_port) + ' Sequence Number : ' + str(TCP_sequence) + ' Acknowledgement : ' + str(TCP_acknowledgement) + ' TCP header length : ' + str(TCPh_length)
+	TCPClass.Length = TCPClass.DataOffsetReserved >> 4
+	TCPClass.Length = TCPClass.Length * 4
 
 	#extract data
-	TCP_data = packet[TCPh_length:]
+	TCPClass.Data = packet[previous_length + TCPClass.Length:]
 	
-	#print data for now
-	print 'Data : ' + TCP_data	
+	return TCPClass
 
-def UDP(packet):
-	#UDP header length is 8 bytes
-	UDP_length = 8
+def extract_UDPheader(packet, previous_length):
+	#create _UDPHeader object
+	UDPClass = _UDPHeader()
 	
 	#parse the UDP header
-	UDP_header = packet[0:UDP_length]
+	UDP_header = packet[previous_length:UDPClass.Length + previous_length]
 	
 	#							UDP HEADER
 	#0                   1                   2                   3
@@ -548,25 +561,22 @@ def UDP(packet):
 	UDPh = struct.unpack('!HHHH', UDP_header)
 	
 	#Extract info
-	UDPh_source_port = UDPh[0]
-	UDPh_destination_port = UDPh[1]
-	UDPh_length = UDPh[2]
-	UDPh_checksum = UDPh[3]
-	
-	print 'Source Port : ' + str(UDPh_source_port) + ' Dest Port : ' + str(UDPh_destination_port) + ' Length : ' + str(UDP_length) + ' Checksum : ' + str(UDPh_checksum)
+	UDPClass.SourcePort = UDPh[0]
+	UDPClass.DestinationPort = UDPh[1]
+	UDPClass.Length = UDPh[2] #not sure if this includes DATA length or not
+	UDPClass.Checksum = UDPh[3]
 	
 	#extract data
-	UDP_data = packet[UDP_length:]
+	UDPClass.Data = packet[previous_length + UDPClass.Length:]
 	
-	#print data for now
-	print 'Data : ' + UDP_data
+	return UDPClass
 	
-def ICMP(packet):
-	#ICMP header length is 4 bytes
-	ICMP_length = 4
+def extract_ICMPheader(packet, previous_length):
+	#create _ICMPHeader object
+	ICMPClass = _ICMPHeader()
 	
 	#parse ICMP header
-	ICMP_header = packet[0:ICMP_length]
+	ICMP_header = packet[previous_length:ICMPClass.Length + previous_length]
 
 	#unpack ICMP header
 	ICMPh = struct.unpack('!BBH' , ICMP_header)
@@ -581,18 +591,17 @@ def ICMP(packet):
 	#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	
 	#extract info
-	ICMPh_type = ICMPh[0]
-	ICMPh_code = ICMPh[1]
-	ICMPh_checksum = ICMPh[2]
-	
-	print 'Type : ' + str(ICMPh_type) + ' Code : ' + str(ICMPh_code) + ' Checksum : ' + str(ICMPh_checksum)
+	ICMPClass.Type = ICMPh[0]
+	ICMPClass.Code = ICMPh[1]
+	ICMPClass.Checksum = ICMPh[2]
 	
 	#extract data
-	ICMP_data = packet[ICMP_length:]
+	ICMPClass.Data = packet[ICMPClass.Length + previous_length:]
 	
-	#print data for now
-	print 'Data : ' + ICMP_data
+	return ICMPClass
 	
-sock=create_socket()
+#actual program code
+sock = create_socket()
 while True:
-        extract_packet(sock)
+	pack = extract_packet(sock)
+	#pack.Length etc. to get values
