@@ -455,6 +455,32 @@ def extract_ARPheader(packet, datalink_length):
 	return ARPClass
 
 def extract_IPv6header(packet, datalink_length):
+#            _____________________________________________________________________________________
+#OCTET BIT  |0_1_2_3_4_5_6_7_8_9_10_11_12_13_14_15_16_17_18_19_20_21_22_23_24_25_26_27_28_29_30_31|
+#  0    0   |version|  Traffic Class  |                   FLOW LABEL                              |
+#OCTET BIT  |0_1_2_3_4_5_6_7_8_9_10_11_12_13_14_15_16_17_18_19_20_21_22_23_24_25_26_27_28_29_30_31|
+#  4    32  |____________Payload_Lenght___________|______NEXT__HEADER_____|_______HOP__LIMIT______|
+#OCTET BIT  |0_1_2_3_4_5_6_7_8_9_10_11_12_13_14_15_16_17_18_19_20_21_22_23_24_25_26_27_28_29_30_31|
+#  8    64  |                                                                                     |
+# 12    96  |                                    SOURCE ADDRESS                                   |
+# 16    128 |                                                                                     |
+# 20    160 |_____________________________________________________________________________________|
+#OCTET BIT  |0_1_2_3_4_5_6_7_8_9_10_11_12_13_14_15_16_17_18_19_20_21_22_23_24_25_26_27_28_29_30_31|
+# 24    192 |                                                                                     |
+# 28    224 |                                  DESTINATION ADDRESS                                |
+# 32    256 |                                                                                     |
+# 36    288 |_____________________________________________________________________________________|
+        
+        #IPV 6
+        #VERSION                 4bits
+        #Traffic Class           8bits
+        #Flow Label             20bits
+        #Payload lenght         16bits
+        #Next header             8bits
+        #Hop limit               8bits
+        #SOURCE Address        128bits
+        #DESTINATION address   128bits
+
 	
 	
 def convert_transportprotocol(transport_protocol):
