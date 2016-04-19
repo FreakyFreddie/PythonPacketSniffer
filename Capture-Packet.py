@@ -141,8 +141,16 @@ class _ARPHeader:
 
 class _IPv6Header:
         def __init__(self):
-                self.Length
-                self.Protocol
+                self.Length = 80
+                self.Protocol = None
+                self.Version = None
+                self.TrafficClass = None
+                self.FlowLabel = None
+                self.PayloadLength = None
+                self.NextHeader = None
+                self.HopLimit = None
+                self.SourceAddress = None
+                self.DestinationAddress = None
 
 class _TCPHeader:
         def __init__(self):
@@ -483,6 +491,19 @@ def extract_IPv6header(packet, datalink_length):
 #       Hop limit               8bits
 #       SOURCE Address        128bits
 #       DESTINATION address   128bits
+
+        #create _IPv6Header object
+        IPv6Class = _IPv6Header()
+
+        #parse the IPv6 header (first 20 characters after ethernet header)
+        IPv6_header = packet[datalink_length:datalink_length+IPv6Class.Length]
+
+        #unpacking the IPv4 header
+        #B unpacking to unsigned char
+        #H unpacking to unsigned short int
+        #s unpacking to string of 4 chars
+        IPv6h = struct.unpack('!IHHQQQQ', IPv6_header)
+
         
 def convert_transportprotocol(transport_protocol):
         #open the csv file with Datalink_protocols
