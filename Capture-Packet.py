@@ -89,7 +89,7 @@ class _Packet:
 			self.TransportProtocol = convert_transportprotocol(self.HexTransportProtocol)
 			
 			#extract transport layer header
-			self.TransportProtocol = extract_transportheader(self.Content, self.NetworkHeader.Protocol, self.DataLinkHeader.Length, self.NetworkHeader.Length)
+			self.TransportHeader = extract_transportheader(self.Content, self.NetworkHeader.Protocol, self.DataLinkHeader.Length, self.NetworkHeader.Length)
 		
 class _EthernetHeader: 
 	def __init__(self):
