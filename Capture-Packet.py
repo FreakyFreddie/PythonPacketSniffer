@@ -95,7 +95,7 @@ class _EthernetHeader:
 		self.SourceMAC = None
 		self.DestinationMAC = None
 		self.Protocol = None
-		self.payload = None
+		self.Payload = None
 		
 		#default no VLAN present
 		self.VLANCount = 0
