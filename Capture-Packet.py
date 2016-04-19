@@ -608,6 +608,8 @@ sock = create_socket()
 while True:
 	pack = extract_packet(sock)
 	#pack.Length etc. to get values
-	print str(pack.Length)
-	print str(pack.EthernetHeader.SourceMAC)
-	print str(pack.EthernetHeader.DestinationMAC)
+        print str(pack.Length)
+        print str(pack.DataLinkHeader.SourceMAC)
+        print str(pack.DataLinkHeader.DestinationMAC)
+        print str(pack.NetworkProtocol)
+        print str(pack.TransportProtocol)
