@@ -414,7 +414,7 @@ def extract_ARPheader(packet, datalink_length):
 	
 	#unpack protocol address sender
 	ARP_protocol_address_sender = packet[ARPClass.Length:ARPClass.Length+ARPClass.ProtocolAddressLength]
-	unpack_format_protocol = '!' + str(ARPh_protocol_address_length) + 's'
+	unpack_format_protocol = '!' + str(ARPClass.ProtocolAddressLength) + 's'
 	ARPClass.ProtocolAddressSender = struct.unpack(unpack_format_protocol, ARP_protocol_address_sender)
 	
 	#temporary length var to avoid long sums
