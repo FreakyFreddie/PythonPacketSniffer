@@ -470,16 +470,16 @@ def extract_IPv6header(packet, datalink_length):
 # 28    224 |                                  DESTINATION ADDRESS                                |
 # 32    256 |                                                                                     |
 # 36    288 |_____________________________________________________________________________________|
-        
-        #IPV 6
-        #VERSION                 4bits
-        #Traffic Class           8bits
-        #Flow Label             20bits
-        #Payload lenght         16bits
-        #Next header             8bits
-        #Hop limit               8bits
-        #SOURCE Address        128bits
-        #DESTINATION address   128bits
+#                        _____
+#                       |IPV_6|
+#       VERSION                 4bits
+#       Traffic Class           8bits
+#       Flow Label             20bits
+#       Payload lenght         16bits
+#       Next header             8bits
+#       Hop limit               8bits
+#       SOURCE Address        128bits
+#       DESTINATION address   128bits
 
 	
 	
