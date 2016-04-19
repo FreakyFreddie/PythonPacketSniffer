@@ -13,11 +13,13 @@ sock = create_socket()
 #Second, extract a packet from the socket --> returns Packet instance
 pack = extract_packet(sock)
 
-#Use instance.Attribute to access data, examplex below
-pack.Length #returns packet length in bytes
-pack.DataLinkHeader #returns Ethernet_Header instance from Packet object pack
-pack.DataLinkHeader.SourceMAC #returns Source MAC address from Ethernet_Header instance from Packet object pack
-pack.DataLinkHeader.VLAN[0].TPID #returns TPID from the first VLAN of the ethernet header from Packet object pack
+#Use instance.Attribute to access data, examples below
+pack.Length 							#returns packet length in bytes
+pack.DataLinkHeader 					#returns Ethernet_Header instance from Packet object pack
+pack.DataLinkHeader.SourceMAC 			#returns Source MAC address from Ethernet_Header instance from Packet object pack
+pack.DataLinkHeader.VLAN[0].TPID 		#returns TPID from the first VLAN of the ethernet header from Packet object pack
+
+#IPv4 options nog toevoegen
 
 CLASSES
 Packet:
@@ -39,15 +41,38 @@ Packet:
 	Length
 	Content
 	DataLinkHeader
+		Length
 		SourceMAC
 		DestinationMAC
 		Protocol
+		Payload
 		VLANCount
 		VLAN[]
 			TPID
 			PCP
 			DEI
+	HexNetworkProtocol
+	NetworkProtocol
 	NetworkHeader
+		Length
+		Protocol
+		#PROTOCOL IPv4
+		Version
+		IHL
+		TTL
+		SourceAddress
+		DestinationAddress
+		#PROTOCOL ARP
+		DataLinkProtocol
+		NetworkProtocol
+		HardwareAddressLength
+		ProtocolAddressLength
+		Operation
+		HardwareAddressSender
+		ProtocolAddressSender
+		HardwareAddressTarget
+		ProtocolAddressTarget
+		
 	TransportHeader
 
 Functions

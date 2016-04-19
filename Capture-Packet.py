@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #THIS CODE CAPTURES NETWORK PACKETS
 #Only works for LINUX systems
 
@@ -70,23 +71,25 @@ class _Packet:
 		#extract header from Data Link Layer (OSI)
 		self.DataLinkHeader = extract_ethernetheader(self.Content)
 		
-		#Network layer Protocol in hex (int)
-		self.HexNetworkProtocol = self.DataLinkHeader.Protocol
+		if self.DataLinkHeader.Protocol != None:
+			#Network layer Protocol in hex (int)
+			self.HexNetworkProtocol = self.DataLinkHeader.Protocol
+			
+			#Network layer Protocol in readable text
+			self.NetworkProtocol = convert_networkprotocol(self.HexNetworkProtocol)
 		
-		#Network layer Protocol in readable text
-		self.NetworkProtocol = convert_networkprotocol(self.HexNetworkProtocol)
+			#extract network layer header based on DataLink protocol
+			self.NetworkHeader = extract_networkheader(self.Content, self.DataLinkHeader.Protocol, self.DataLinkHeader.Length)
 		
-		#extract network layer header based on DataLink protocol
-		self.NetworkHeader = extract_networkheader(self.Content, self.DataLinkHeader.Protocol, self.DataLinkHeader.Length)
-		
-		#Transport layer protocol in hex (int)
-		self.HexTransportProtocol = self.NetworkHeader.Protocol
-		
-		#convert transport layer protocol to readable text
-		self.TransportProtocol = convert_transportprotocol(self.HexTransportProtocol)
-		
-		#extract transport layer header
-		self.TransportProtocol = extract_transportheader(self.Content, self.NetworkHeader.Protocol, self.DataLinkHeader.Length, self.NetworkHeader.Length)
+		if self.NetworkHeader.Protocol != None:
+			#Transport layer protocol in hex (int)
+			self.HexTransportProtocol = self.NetworkHeader.Protocol
+			
+			#convert transport layer protocol to readable text
+			self.TransportProtocol = convert_transportprotocol(self.HexTransportProtocol)
+			
+			#extract transport layer header
+			self.TransportProtocol = extract_transportheader(self.Content, self.NetworkHeader.Protocol, self.DataLinkHeader.Length, self.NetworkHeader.Length)
 		
 class _EthernetHeader: 
 	def __init__(self):
@@ -398,46 +401,46 @@ def extract_ARPheader(packet, datalink_length):
 	ARPClass.Operation = ARPh[3]
 	
 	#temporary length var to avoid long sums
-	ARPClass.length += datalink_length
+	ARPClass.Length += datalink_length
 	
 	#unpack hardware address sender
 	#we need the length to unpack (ex MAC address is 6s)
-	ARP_hardware_address_sender = packet[ARPClass.length:ARPClass.length+ARPClass.HardwareAddressLength]
+	ARP_hardware_address_sender = packet[ARPClass.Length:ARPClass.Length+ARPClass.HardwareAddressLength]
 	unpack_format_hardware = '!' + str(ARPClass.HardwareAddressLength) + 's'
 	ARPClass.HardwareAddressSender = struct.unpack(unpack_format_hardware, ARP_hardware_address_sender)
 	
 	#temporary length var to avoid long sums
-	ARPClass.length += ARPClass.HardwareAddressLength
+	ARPClass.Length += ARPClass.HardwareAddressLength
 	
 	#unpack protocol address sender
-	ARP_protocol_address_sender = packet[ARPClass.length:ARPClass.length+ARPClass.ProtocolAddressLength]
+	ARP_protocol_address_sender = packet[ARPClass.Length:ARPClass.Length+ARPClass.ProtocolAddressLength]
 	unpack_format_protocol = '!' + str(ARPh_protocol_address_length) + 's'
 	ARPClass.ProtocolAddressSender = struct.unpack(unpack_format_protocol, ARP_protocol_address_sender)
 	
 	#temporary length var to avoid long sums
-	ARPClass.length += ARPClass.ProtocolAddressLength
+	ARPClass.Length += ARPClass.ProtocolAddressLength
 	
 	#unpack hardware address target
-	ARP_hardware_address_target = packet[ARPClass.length:ARPClass.length+ARPClass.HardwareAddressLength]
+	ARP_hardware_address_target = packet[ARPClass.Length:ARPClass.Length+ARPClass.HardwareAddressLength]
 	ARPClass.HardwareAddressTarget = struct.unpack(unpack_format_hardware, ARP_hardware_address_target)
 	
 	#temporary length var to avoid long sums
-	ARPClass.length += ARPClass.HardwareAddressLength
+	ARPClass.Length += ARPClass.HardwareAddressLength
 	
 	#unpack protocol address target
-	ARP_protocol_address_target = packet[ARPClass.length:ARPClass.length+ARPClass.ProtocolAddressLength]
+	ARP_protocol_address_target = packet[ARPClass.Length:ARPClass.Length+ARPClass.ProtocolAddressLength]
 	ARPClass.ProtocolAddressTarget = struct.unpack(unpack_format_protocol, ARP_protocol_address_target)
 	
 	#temporary length var to avoid long sums
-	ARPClass.length += ARPClass.ProtocolAddressLength
+	ARPClass.Length += ARPClass.ProtocolAddressLength
 	
 	#final length of the ARP header
-	ARPClass.length -= datalink_length
+	ARPClass.Length -= datalink_length
 	
 	#Hardware address to correct format
 	#if we use ethernet address (MAC), we don't need the unpacked address
 	#MAC_address() function will do the conversion for us
-	if ARPh_network_protocol == 1:
+	if ARPClass.DataLinkProtocol == 1:
 		ARPClass.HardwareAddressSender = MAC_address(ARP_hardware_address_sender)
 		ARPClass.HardwareAddressTarget = MAC_address(ARP_hardware_address_target)
 	else:
@@ -446,9 +449,9 @@ def extract_ARPheader(packet, datalink_length):
 	#Protocol address to correct format
 	#if we use IP address (IPv4), we don't need the unpacked address
 	#socket.inet_ntoa() function will do the conversion for us
-	if ARPh_protocol_type == 2048:
-		ARPh_protocol_address_sender = socket.inet_ntoa(ARP_protocol_address_sender)
-		ARPh_protocol_address_target = socket.inet_ntoa(ARP_protocol_address_target)
+	if ARPClass.NetworkProtocol == 2048:
+		ARPClass.ProtocolAddressSender = socket.inet_ntoa(ARP_protocol_address_sender)
+		ARPClass.ProtocolAddressTarget = socket.inet_ntoa(ARP_protocol_address_target)
 	else:
 		print 'ARP network protocol type not supported'
 	
