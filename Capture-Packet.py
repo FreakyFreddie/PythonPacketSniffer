@@ -488,7 +488,7 @@ def extract_transportheader(packet, network_protocol, datalink_length, network_l
 		TranClass = extract_ICMPheader(packet, combi_length)
 		return TranClass
 	else:
-		TranClass = 'Transport protocol not supported.'
+		TranClass = 'Transport protcol not supported.'
 		return TranClass
 
 #Transport Layer Protocols
@@ -612,4 +612,5 @@ while True:
         print str(pack.DataLinkHeader.SourceMAC)
         print str(pack.DataLinkHeader.DestinationMAC)
         print str(pack.NetworkProtocol)
-        print str(pack.TransportProtocol)
+        if pack.NetworkHeader.Protocol != None:
+               print str(pack.TransportProtocol)
