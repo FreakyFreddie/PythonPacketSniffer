@@ -62,7 +62,7 @@ def MAC_address(packet):
 
 def IPv6_address(packet):
 	IPv6 = "%2.2x%2.2x:%2.2x%2.2x:%2.2x%2.2x:%2.2x%2.2x:%2.2x%2.2x:%2.2x%2.2x:%2.2x%2.2x:%2.2x%2.2x:" % (ord(packet[0]), ord(packet[1]), ord(packet[2]), ord(packet[3]), ord(packet[4]), ord(packet[5]), ord(packet[6]), ord(packet[7]), ord(packet[8]), ord(packet[9]), ord(packet[10]), ord(packet[11]), ord(packet[12]), ord(packet[13]), ord(packet[14]), ord(packet[15]))
-    return IPv6
+	return IPv6
 
 class _Packet:
 	def __init__(self, packet):
@@ -157,7 +157,6 @@ class _IPv6Header:
 		self.DestinationAddress = None
 
 class _IPv6Address:
-	s _IPv6Header:
 	def __init__(self):
 		self.Address = None
 		self.Type = None
@@ -540,42 +539,42 @@ def read_IPv6address(IPv6_address, IPv6_address_hex):
 	IPv6h = struct.unpack('!QQ', IPv6_address_hex)
 		
 		#check address type
-		if ((IPv6_address >> 8) & 0xFF) == 0:
-			IPv6AddressClass.TypeNumber = 1
-			IPv6AddressClass.Type = "Loopback"
-			IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)
+	if ((IPv6_address >> 8) & 0xFF) == 0:
+		IPv6AddressClass.TypeNumber = 1
+		IPv6AddressClass.Type = "Loopback"
+		IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)
 
-		elif ((IPv6_address >> 13) & 0xF) == 1:
-			IPv6AddressClass.TypeNumber = 2
-			IPv6AddressClass.Type = "Global Unicast"
-			IPv6AddressClass.GlobalRoutingPrefix = (IPv6h[0] >> 16) & 0xFFFFFFFFFFFF
-			IPv6AddressClass.SubnetID = IPv6h[0] & 0xFFFF
-			IPv6AddressClass.InterfaceID = IPv6h[1]
-			IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)
+	elif ((IPv6_address >> 13) & 0xF) == 1:
+		IPv6AddressClass.TypeNumber = 2
+		IPv6AddressClass.Type = "Global Unicast"
+		IPv6AddressClass.GlobalRoutingPrefix = (IPv6h[0] >> 16) & 0xFFFFFFFFFFFF
+		IPv6AddressClass.SubnetID = IPv6h[0] & 0xFFFF
+		IPv6AddressClass.InterfaceID = IPv6h[1]
+		IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)
 
-		elif ((IPv6_address >> 4) & 0xFFC) == 4088:
-			IPv6AddressClass.TypeNumber = 3
-			IPv6AddressClass.Type = "Link Local"
-			IPv6AddressClass.InterfaceID = IPv6h[1]
-			IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)
+	elif ((IPv6_address >> 4) & 0xFFC) == 4088:
+		IPv6AddressClass.TypeNumber = 3
+		IPv6AddressClass.Type = "Link Local"
+		IPv6AddressClass.InterfaceID = IPv6h[1]
+		IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)
 
-		elif ((IPv6_address >> 7) & 0x7F) == 7E:
-			IPv6AddressClass.TypeNumber = 4
-			IPv6AddressClass.Type = "Unique Local"
-			IPv6AddressClass.LocalBit = (IPv6h[0] >> 120) & 0xFFFFFFFFFFFF
-			IPv6AddressClass.GlobalID = (IPv6h[0] >> 16) & 0xFFFFFFFFFF
-			IPv6AddressClass.SubnetID = IPv6[0] & 0xFFFF
-			IPv6AddressClass.InterfaceID = IPv6[1]
-			IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)
-		
-		elif ((IPv6_address >> 8) & 0xFF) == 255:
-			IPv6AddressClass.TypeNumber = 5
-			IPv6AddressClass.Type = "Multicast"
-			IPv6AddressClass.Flags = (IPv6h[0] >> 52) & 0xF
-			IPv6AddressClass.Scope = (IPv6h[0] >> 48) & 0xF
-			IPv6AddressClass.GroupID = (IPv6[0] & 0xFFFFFFFFFFFF)*18446744073709551616
-			IPv6AddressClass.GroupID += IPv6[1]	
-			IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)			
+	elif ((IPv6_address >> 7) & 0x7F) == 126:
+		IPv6AddressClass.TypeNumber = 4
+		IPv6AddressClass.Type = "Unique Local"
+		IPv6AddressClass.LocalBit = (IPv6h[0] >> 120) & 0xFFFFFFFFFFFF
+		IPv6AddressClass.GlobalID = (IPv6h[0] >> 16) & 0xFFFFFFFFFF
+		IPv6AddressClass.SubnetID = IPv6[0] & 0xFFFF
+		IPv6AddressClass.InterfaceID = IPv6[1]
+		IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)
+	
+	elif ((IPv6_address >> 8) & 0xFF) == 255:
+		IPv6AddressClass.TypeNumber = 5
+		IPv6AddressClass.Type = "Multicast"
+		IPv6AddressClass.Flags = (IPv6h[0] >> 52) & 0xF
+		IPv6AddressClass.Scope = (IPv6h[0] >> 48) & 0xF
+		IPv6AddressClass.GroupID = (IPv6[0] & 0xFFFFFFFFFFFF)*18446744073709551616
+		IPv6AddressClass.GroupID += IPv6[1]	
+		IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)			
 			
 	return Ipv6AddressClass
         
@@ -728,5 +727,5 @@ while True:
 	pack = extract_packet(sock)
 	#pack.Length etc. to get values
 	print str(pack.Length)
-	print str(pack.EthernetHeader.SourceMAC)
-	print str(pack.EthernetHeader.DestinationMAC)
+	print str(pack.DataLinkHeader.SourceMAC)
+	print str(pack.DataLinkHeader.DestinationMAC)
