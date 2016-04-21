@@ -62,7 +62,8 @@ def MAC_address(packet):
 
 def IPv6_address(packet):
 	IPv6 = "%2.2x%2.2x:%2.2x%2.2x:%2.2x%2.2x:%2.2x%2.2x:%2.2x%2.2x:%2.2x%2.2x:%2.2x%2.2x:%2.2x%2.2x:" % (ord(packet[0]), ord(packet[1]), ord(packet[2]), ord(packet[3]), ord(packet[4]), ord(packet[5]), ord(packet[6]), ord(packet[7]), ord(packet[8]), ord(packet[9]), ord(packet[10]), ord(packet[11]), ord(packet[12]), ord(packet[13]), ord(packet[14]), ord(packet[15]))
-    return IPv6 
+    return IPv6
+
 class _Packet:
 	def __init__(self, packet):
 		#packet length in bytes
@@ -154,6 +155,22 @@ class _IPv6Header:
 		self.HopLimit = None
 		self.SourceAddress = None
 		self.DestinationAddress = None
+
+class _IPv6Address:
+	s _IPv6Header:
+	def __init__(self):
+		self.Address = None
+		self.Type = None
+		self.TypeNumber = None
+		self.GlobalRoutingPrefix = None
+		self.SubnetID = None
+		self.InterfaceID = None
+		self.LocalBit = None
+		self.GlobalID = None
+		self.Flags = None
+		self.Scope = None
+		self.GroupID = None
+		
 
 class _TCPHeader:
 	def __init__(self):
@@ -333,7 +350,6 @@ def extract_IPv4header(packet, datalink_length):
 	#s unpacking to string of 4 chars
 	IPv4h = struct.unpack('!BBHHHBBH4s4s', IPv4_header)
 
-
 	#version and internet header length (ihl) are in the first unsigned char
 	IPv4h_version_ihl = IPv4h[0]
 
@@ -501,12 +517,67 @@ def extract_IPv6header(packet, datalink_length):
 	#parse the IPv6 header (first 20 characters after ethernet header)
 	IPv6_header = packet[datalink_length:datalink_length+IPv6Class.Length]
 
-	#unpacking the IPv4 header
-	#B unpacking to unsigned char
+	#unpacking the IPv6 header
 	#H unpacking to unsigned short int
-	#s unpacking to string of 4 chars
+	#I unpacking unsigned int (32bit)
 	IPv6h = struct.unpack('!IHHHHHHHHHHHHHHHHHHHHHHHHHH', IPv6_header)
+	IPv6Class.SourceAddress = read_IPv6address(IPv6h[2:10], IPv6_header[8:24])
+	IPv6Class.DestinationAddress = read_IPv6address(IPv6h[10:18], IPv6_header[24:30])
 	
+	IPv6Class.Version = (IPv6h[0] >> 28) & 0xF
+	IPv6Class.TrafficClass = (IPv6h[0] >> 20) & 0xFF
+	IPv6Class.FlowLabel = IPv6h[0] & 0xFFFFF
+	IPv6Class.PayloadLength = IPv6h[1]
+	IPv6Class.NextHeader = (IPv6h[2] >> 8) & 0xFF
+	IPv6Class.HopLimit = IPv6h[3] & 0xFF
+	
+	return IPv6Class
+	
+def read_IPv6address(IPv6_address, IPv6_address_hex):
+	#create IPv6_Address object
+	IPv6AddressClass = _IPv6Address()
+	
+	IPv6h = struct.unpack('!QQ', IPv6_address_hex)
+		
+		#check address type
+		if ((IPv6_address >> 8) & 0xFF) == 0:
+			IPv6AddressClass.TypeNumber = 1
+			IPv6AddressClass.Type = "Loopback"
+			IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)
+
+		elif ((IPv6_address >> 13) & 0xF) == 1:
+			IPv6AddressClass.TypeNumber = 2
+			IPv6AddressClass.Type = "Global Unicast"
+			IPv6AddressClass.GlobalRoutingPrefix = (IPv6h[0] >> 16) & 0xFFFFFFFFFFFF
+			IPv6AddressClass.SubnetID = IPv6h[0] & 0xFFFF
+			IPv6AddressClass.InterfaceID = IPv6h[1]
+			IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)
+
+		elif ((IPv6_address >> 4) & 0xFFC) == 4088:
+			IPv6AddressClass.TypeNumber = 3
+			IPv6AddressClass.Type = "Link Local"
+			IPv6AddressClass.InterfaceID = IPv6h[1]
+			IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)
+
+		elif ((IPv6_address >> 7) & 0x7F) == 7E:
+			IPv6AddressClass.TypeNumber = 4
+			IPv6AddressClass.Type = "Unique Local"
+			IPv6AddressClass.LocalBit = (IPv6h[0] >> 120) & 0xFFFFFFFFFFFF
+			IPv6AddressClass.GlobalID = (IPv6h[0] >> 16) & 0xFFFFFFFFFF
+			IPv6AddressClass.SubnetID = IPv6[0] & 0xFFFF
+			IPv6AddressClass.InterfaceID = IPv6[1]
+			IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)
+		
+		elif ((IPv6_address >> 8) & 0xFF) == 255:
+			IPv6AddressClass.TypeNumber = 5
+			IPv6AddressClass.Type = "Multicast"
+			IPv6AddressClass.Flags = (IPv6h[0] >> 52) & 0xF
+			IPv6AddressClass.Scope = (IPv6h[0] >> 48) & 0xF
+			IPv6AddressClass.GroupID = (IPv6[0] & 0xFFFFFFFFFFFF)*18446744073709551616
+			IPv6AddressClass.GroupID += IPv6[1]	
+			IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)			
+			
+	return Ipv6AddressClass
         
 def convert_transportprotocol(transport_protocol):
 	#open the csv file with Datalink_protocols
