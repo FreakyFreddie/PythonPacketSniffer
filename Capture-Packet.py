@@ -145,7 +145,7 @@ class _ARPHeader:
 
 class _IPv6Header:
 	def __init__(self):
-		self.Length = 80
+		self.Length = 40
 		self.Protocol = None
 		self.Version = None
 		self.TrafficClass = None
@@ -513,15 +513,15 @@ def extract_IPv6header(packet, datalink_length):
 	#create _IPv6Header object
 	IPv6Class = _IPv6Header()
 
-	#parse the IPv6 header (first 20 characters after ethernet header)
+	#parse the IPv6 header (first 40 characters after ethernet header)
 	IPv6_header = packet[datalink_length:datalink_length+IPv6Class.Length]
 
 	#unpacking the IPv6 header
 	#H unpacking to unsigned short int
 	#I unpacking unsigned int (32bit)
-	IPv6h = struct.unpack('!IHHHHHHHHHHHHHHHHHHHHHHHHHH', IPv6_header)
-	IPv6Class.SourceAddress = read_IPv6address(IPv6h[2:10], IPv6_header[8:24])
-	IPv6Class.DestinationAddress = read_IPv6address(IPv6h[10:18], IPv6_header[24:30])
+	IPv6h = struct.unpack('!IHHHHHHHHHHHHHHHHHH', IPv6_header)
+	IPv6Class.SourceAddress = read_IPv6address(IPv6h[3:11], IPv6_header[8:24])
+	IPv6Class.DestinationAddress = read_IPv6address(IPv6h[11:18], IPv6_header[24:40])
 	
 	IPv6Class.Version = (IPv6h[0] >> 28) & 0xF
 	IPv6Class.TrafficClass = (IPv6h[0] >> 20) & 0xFF
