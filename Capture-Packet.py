@@ -520,8 +520,8 @@ def extract_IPv6header(packet, datalink_length):
 	#H unpacking to unsigned short int
 	#I unpacking unsigned int (32bit)
 	IPv6h = struct.unpack('!IHHHHHHHHHHHHHHHHHH', IPv6_header)
-	IPv6Class.SourceAddress = read_IPv6address(IPv6h[3:11], IPv6_header[8:24])
-	IPv6Class.DestinationAddress = read_IPv6address(IPv6h[11:18], IPv6_header[24:40])
+	IPv6Class.SourceAddress = read_IPv6address(IPv6_header[8:24])
+	IPv6Class.DestinationAddress = read_IPv6address(IPv6_header[24:40])
 	
 	IPv6Class.Version = (IPv6h[0] >> 28) & 0xF
 	IPv6Class.TrafficClass = (IPv6h[0] >> 20) & 0xFF
@@ -532,51 +532,52 @@ def extract_IPv6header(packet, datalink_length):
 	
 	return IPv6Class
 	
-def read_IPv6address(IPv6_address, IPv6_address_hex):
+def read_IPv6address(IPv6_address_hex):
 	#create IPv6_Address object
 	IPv6AddressClass = _IPv6Address()
 	
 	IPv6h = struct.unpack('!QQ', IPv6_address_hex)
-		
+	IPv6_prefix = struct.unpack('!HHHHQ', IPv6_address_hex)
+
 		#check address type
-	if ((IPv6_address >> 8) & 0xFF) == 0:
+	if ((IPv6_prefix[0] >> 8) & 0xFF) == 0x0:
 		IPv6AddressClass.TypeNumber = 1
 		IPv6AddressClass.Type = "Loopback"
-		IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)
+		IPv6AddressClass.Address = IPv6_address(IPv6_address_hex)
 
-	elif ((IPv6_address >> 13) & 0xF) == 1:
+	elif ((IPv6_prefix[0] >> 12) & 0xE) == 0x2:
 		IPv6AddressClass.TypeNumber = 2
 		IPv6AddressClass.Type = "Global Unicast"
 		IPv6AddressClass.GlobalRoutingPrefix = (IPv6h[0] >> 16) & 0xFFFFFFFFFFFF
 		IPv6AddressClass.SubnetID = IPv6h[0] & 0xFFFF
 		IPv6AddressClass.InterfaceID = IPv6h[1]
-		IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)
+		IPv6AddressClass.Address = IPv6_address(IPv6_address_hex)
 
-	elif ((IPv6_address >> 4) & 0xFFC) == 4088:
+	elif ((IPv6_prefix[0] >> 4) & 0xFFC) == 0xFE8:
 		IPv6AddressClass.TypeNumber = 3
 		IPv6AddressClass.Type = "Link Local"
 		IPv6AddressClass.InterfaceID = IPv6h[1]
-		IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)
+		IPv6AddressClass.Address = IPv6_address(IPv6_address_hex)
 
-	elif ((IPv6_address >> 7) & 0x7F) == 126:
+	elif ((IPv6_prefix[0] >> 8) & 0xFE) == 0xFC:
 		IPv6AddressClass.TypeNumber = 4
 		IPv6AddressClass.Type = "Unique Local"
 		IPv6AddressClass.LocalBit = (IPv6h[0] >> 120) & 0xFFFFFFFFFFFF
 		IPv6AddressClass.GlobalID = (IPv6h[0] >> 16) & 0xFFFFFFFFFF
 		IPv6AddressClass.SubnetID = IPv6[0] & 0xFFFF
 		IPv6AddressClass.InterfaceID = IPv6[1]
-		IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)
+		IPv6AddressClass.Address = IPv6_address(IPv6_address_hex)
 	
-	elif ((IPv6_address >> 8) & 0xFF) == 255:
+	elif ((IPv6_prefix[0] >> 8) & 0xFF) == 0xFF:
 		IPv6AddressClass.TypeNumber = 5
 		IPv6AddressClass.Type = "Multicast"
 		IPv6AddressClass.Flags = (IPv6h[0] >> 52) & 0xF
 		IPv6AddressClass.Scope = (IPv6h[0] >> 48) & 0xF
-		IPv6AddressClass.GroupID = (IPv6[0] & 0xFFFFFFFFFFFF)*18446744073709551616
-		IPv6AddressClass.GroupID += IPv6[1]	
-		IPv6AddressClass.Address = IPv6_Address(IPv6_address_hex)			
+		IPv6AddressClass.GroupID = (IPv6h[0] & 0xFFFFFFFFFFFF)*18446744073709551616
+		IPv6AddressClass.GroupID += IPv6h[1]	
+		IPv6AddressClass.Address = IPv6_address(IPv6_address_hex)			
 			
-	return Ipv6AddressClass
+	return IPv6AddressClass
         
 def convert_transportprotocol(transport_protocol):
 	#open the csv file with Datalink_protocols
