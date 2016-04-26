@@ -7,11 +7,15 @@ Class Instances --> first 3 or 4 lettres of classname + Class (ex. EthClass)
 normal variables --> always lowercase, words separated by _ (ex. ethernet_header)
 
 HOW TO USE THIS MODULE
-#First, create a socket --> returns socket
+#IMPORT the module
+from Capture-Packet import *
+
+#Create a socket --> returns socket
 sock = create_socket()
 
 #Second, extract a packet from the socket --> returns Packet instance
-pack = extract_packet(sock)
+while True:
+	pack = extract_packet(sock)
 
 #Use instance.Attribute to access data, examples below
 pack.Length 							#returns packet length in bytes
@@ -19,23 +23,101 @@ pack.DataLinkHeader 					#returns Ethernet_Header instance from Packet object pa
 pack.DataLinkHeader.SourceMAC 			#returns Source MAC address from Ethernet_Header instance from Packet object pack
 pack.DataLinkHeader.VLAN[0].TPID 		#returns TPID from the first VLAN of the ethernet header from Packet object pack
 
-#IPv4 options nog toevoegen
 
 CLASSES
-Packet:
+_Packet:
 	Length #number of bytes in this packet
 	Content #string of bytes, representing the packet
 	DataLinkHeader #Ethernet_Header object [source_MAC, destination_MAC, protocol, VLAN_count, VLAN[]]
-	NetworkHeader #
-	TransportHeader #
+	NetworkProtocol #used network layer protocol in string (IPv4/6...)
+	NetworkHeader #Network layer header
+	TransportProtocol #used transport layer protocol in string (UDP/TCP...)
+	TransportHeader #Transport layer header
 	
-Ethernet_Header:
+_EthernetHeader:
+	Length #Ethernet header length, default 14
 	SourceMAC #the source MAC address
 	DestinationMAC #the destination MAC address
-	Protocol #Protocol number (ex. 2048 = IPv4)
-	VLANCount #number of VLANs in this packet
+	Protocol #Network layer protocol in hex
+	Payload #Packet size if no EtherType present
+	VLANCount #number of VLANs in this packet, default 0
 	VLAN #array of VLAN objects
+
+_VLANTag:
+	TPID #VLAN TPID
+	PCP	#VLAN PCP
+	DEI #VLAN DEI
 	
+_IPv4Header:
+	Length #default 20
+	Protocol #Transport layer protocol in hex
+	Version
+	IHL
+	TTL
+	SourceAddress #Source IPv4 in 0.0.0.0 notation
+	DestinationAddress #Destination IPv4 in 0.0.0.0 notation
+	
+_ARPHeader:
+	Length #default 8
+	Protocol
+	DataLinkProtocol #Used layer 2 protocol (usually Ethernet)
+	NetworkProtocol #Used layer 3 protocol (usually IPv4)
+	HardwareAddressLength #length of layer 2 address (usually MAC)
+	ProtocolAddressLength #length of layer 3 address (usually IPv4)
+	Operation #indicates send/receive/other messages
+	HardwareAddressSender #usually MAC address in 0:0:0:0:0:0 notation
+	HardwareAddressTarget #usually MAC address in 0:0:0:0:0:0 notation
+	ProtocolAddressSender #usually IPv4 address in 0.0.0.0 notation
+	ProtocolAddressTarget #usually IPv4 address in 0.0.0.0 notation
+	
+_IPv6Header:
+	Length #default 40
+	Protocol
+	Version
+	TrafficClass
+	FlowLabel
+	PayloadLength
+	NextHeader
+	HopLimit
+	SourceAddress #source IPv6 address, type IPv6Address
+	DestinationAddress #destination IPv6 address, type IPv6Address
+
+_IPv6Address:
+	Address #actual address
+	Type #link-local/global unicast etc.
+	TypeNumber
+	GlobalRoutingPrefix
+	SubnetID
+	InterfaceID
+	LocalBit
+	GlobalID
+	Flags
+	Scope
+	GroupID
+
+_TCPHeader:
+	Length
+	SourcePort
+	DestinationPort
+	Sequence
+	Acknowledgement
+	DataOffsetReserved
+	Data
+
+_UDPHeader:
+	Length
+	SourcePort
+	DestinationPort
+	Checksum
+	Data
+
+_ICMPHeader:
+	Length
+	Type
+	Code
+	Checksum
+	Data
+
 TREE STRUCTURE (for easy calling)
 Packet:
 	Length
@@ -56,13 +138,15 @@ Packet:
 	NetworkHeader
 		Length
 		Protocol
-		#PROTOCOL IPv4
+		
+		#if PROTOCOL IPv4
 		Version
 		IHL
 		TTL
 		SourceAddress
 		DestinationAddress
-		#PROTOCOL ARP
+		
+		#if PROTOCOL ARP
 		DataLinkProtocol
 		NetworkProtocol
 		HardwareAddressLength
@@ -73,6 +157,61 @@ Packet:
 		HardwareAddressTarget
 		ProtocolAddressTarget
 		
+		#if PROTOCOL IPv6
+		Length
+		Protocol
+		Version
+		TrafficClass
+		FlowLabel
+		PayloadLength
+		NextHeader
+		HopLimit
+		SourceAddress
+			Address
+			Type
+			TypeNumber
+			GlobalRoutingPrefix
+			SubnetID
+			InterfaceID
+			LocalBit
+			GlobalID
+			Flags
+			Scope
+			GroupID
+		DestinationAddress
+			Address
+			Type
+			TypeNumber
+			GlobalRoutingPrefix
+			SubnetID
+			InterfaceID
+			LocalBit
+			GlobalID
+			Flags
+			Scope
+			GroupID
+	HexTransportProtocol
+	TransportProtocol
 	TransportHeader
-
-Functions
+		#if PROTOCOL TCP
+		Length
+		SourcePort
+		DestinationPort
+		Sequence
+		Acknowledgement
+		DataOffsetReserved
+		Data
+		
+		#if PROTOCOL UDP
+		Length
+		SourcePort
+		DestinationPort
+		Checksum
+		Data
+		
+		#if PROTOCOL ICMP
+		Length
+		Type
+		Code
+		Checksum
+		Data
