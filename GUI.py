@@ -19,7 +19,7 @@ import threading
 import Queue
 
 #import the module to capture network packets
-from Capture-Packet import *
+from CapturePacket import *
 
 #create GUI class
 class _InterfaceGUI:
@@ -72,7 +72,7 @@ class _InterfaceGUI:
 			pack = self.queue.get(0)
 
 			#format the packet for printing
-			formatted_packet = 
+			formatted_packet = "Packet length: " + str(pack.Length)
 			
 			#if pause has been clicked, don't print anything
 			#else update the TextFrame's FrameText with the packet info

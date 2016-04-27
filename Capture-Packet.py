@@ -723,14 +723,14 @@ def extract_ICMPheader(packet, previous_length):
 	return ICMPClass
         
 #actual program code
-sock = create_socket()
-while True:
-	pack = extract_packet(sock)
+#sock = create_socket()
+#while True:
+	#pack = extract_packet(sock)
 	#pack.Length etc. to get values
 
-	print str(pack.Length)
-	print str(pack.DataLinkHeader.SourceMAC)
-	print str(pack.DataLinkHeader.DestinationMAC)
-	print str(pack.NetworkProtocol)
-	if pack.NetworkHeader.Protocol != None:
-		print str(pack.TransportProtocol)
+	#print str(pack.Length)
+	#print str(pack.DataLinkHeader.SourceMAC)
+	#print str(pack.DataLinkHeader.DestinationMAC)
+	#print str(pack.NetworkProtocol)
+	#if pack.NetworkHeader.Protocol != None:
+		#print str(pack.TransportProtocol)
