@@ -44,7 +44,7 @@ def extract_packet(sock):
 	packet = sock.recvfrom(65565)
 
 	#debug
-	print packet
+	#print packet
 
 	#create Packet object
 	PacketClass = _Packet(packet[0])
