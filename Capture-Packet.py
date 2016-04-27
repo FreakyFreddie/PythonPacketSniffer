@@ -31,7 +31,7 @@ def create_socket():
 	except socket.error, errormsg:
 		#writing error message to log file
 		errorlog = open('errorlog.txt', 'a')
-		errorlog.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' Socket creation failed. Code: ' + str(msg[0]) + 'Message ' + msg[1] + '\n')
+		errorlog.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' Socket creation failed. Code: ' + str(errormsg[0]) + 'Message ' + errormsg[1] + '\n')
 		errorlog.close
 		sys.exit()
 

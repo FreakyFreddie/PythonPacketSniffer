@@ -73,13 +73,11 @@ class _InterfaceGUI:
 
 			#format the packet for printing
 			formatted_packet = "Packet length: " + str(pack.Length)
-			
+
 			#if pause has been clicked, don't print anything
 			#else update the TextFrame's FrameText with the packet info
 			if pausecheck != 2:
 				self.FrameText.insert(END, formatted_packet)
-
-			print msg
 
 class _MasterThread:
 	#we launch the sub process and the main thread
@@ -98,6 +96,9 @@ class _MasterThread:
 		#create the actual thread
 		self.PacketSnifferThread = threading.Thread(target=self.packet_sniffer_thread)
 
+		#start value
+		self.running = 2
+
 		#launch the thread
 		self.PacketSnifferThread.start()
 
@@ -107,26 +108,26 @@ class _MasterThread:
 		#start the programloop
 		self.call_programloop()
 
-    def call_programloop(self):
-        #process queue, include pausechecker
+	def call_programloop(self):
+		#process queue, include pausechecker
 		#this function empties the queue
-        self.gui.process_queue(self.running)
-		
+		self.gui.process_queue(self.running)
+
 		#check exit condition
-        if self.running == 0:
+		if self.running == 0:
 			#close the socket
 			self.sock.close()
-			
+
 			#exit the program
-            sys.exit(1)
+			sys.exit(1)
 		
 		#test the queue for contents every 100 milliseconds
 		#checks stop button after the queue
-        self.root.after(100, self.call_programloop)
+		self.root.after(100, self.call_programloop)
 
-    def packet_sniffer_thread(self):
+	def packet_sniffer_thread(self):
 		#run the program until stop/pause
-        while self.running == 1:
+		while self.running == 1:
 			#extract a packet from the socket
 			self.pack = extract_packet(self.sock)
 
@@ -135,12 +136,21 @@ class _MasterThread:
 
 	def start_packetsniffer(self):
 		self.running = 1
+		
+		#debug
+		print "Start button pressed"
 	
 	def pause_packetsniffer(self):
 		self.running = 2
 		
-    def end_packetsniffer(self):
-        self.running = 0
+		#debug
+		print "Pause button pressed"
+		
+	def end_packetsniffer(self):
+		self.running = 0
+		
+		#debug
+		print "Stop button pressed"
 
 #create root frame
 root = Tk()
