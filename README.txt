@@ -1,4 +1,4 @@
-README
+#THIS README EXPLAINS THE STRUCTURE OF THE CapturePacket MODULE
 
 Functions --> verb_name (ex. extract_packet())
 Classes --> starts with _, First letter of every word is Uppercase, words separated by _ (ex. _EthernetHeader)
@@ -215,3 +215,16 @@ Packet:
 		Code
 		Checksum
 		Data
+
+
+#How the GUI works
+The _MasterThread class creates:
+	Start Button
+	Pause Button
+	Stop Button
+	Text Frame (including scrollbar)
+	Packet sniffer thread #adds packets to the queue
+	Main loop #processes the packets from the queue and prints them in the Text Frame
+
+You are free to add your own functionality. It's as simple as creating a new thread and starting it in the _MasterThread.
+Define a function and communicate through a new queue. Dont forget to shut down your subprocesses before shutting down the main loop!
