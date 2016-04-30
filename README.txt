@@ -1,5 +1,7 @@
 #THIS README EXPLAINS THE STRUCTURE OF THE CapturePacket MODULE
 
+#----!!!!----CapturePacket only supports LINUX systems----!!!!----#
+
 Functions --> verb_name (ex. extract_packet())
 Classes --> starts with _, First letter of every word is Uppercase, words separated by _ (ex. _EthernetHeader)
 Class variables -->First letter of every word is Uppercase, words not separated (ex. EthernetHeader)
