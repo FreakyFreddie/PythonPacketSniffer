@@ -17,6 +17,10 @@ import csv
 #Date library - needed for the errorlog
 from datetime import datetime
 
+#interruptclass
+class _InterruptThread(Exception):
+	pass
+
 #Creating a socket to capture all packets
 def create_socket():
 	#errorhandling
@@ -41,7 +45,10 @@ def extract_packet(sock):
 
 	#returns packet in hex from socket with bufsize 65565
 	#returns packet as string
-	packet = sock.recvfrom(65565)
+	try:
+		packet = sock.recvfrom(65565)
+	except _InterruptThread:
+		return
 
 	#debug
 	#print packet

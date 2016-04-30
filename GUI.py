@@ -11,7 +11,7 @@ from Tkinter import *
 from ttk import *
 
 #import function to close the socket
-from socket import *
+import socket
 
 #Import threading module since we need to run our packet sniffer in a different thread
 #threading module is more powerfull than thread module
@@ -19,6 +19,9 @@ import threading
 
 #import Queue for Capture-Packet module thread
 import Queue
+
+#import sleep function from time module
+from time import sleep
 
 #import the module to capture network packets
 from CapturePacket import *
@@ -75,10 +78,9 @@ class _InterfaceGUI:
 		
 	#process the current queues
 	def process_queue(self, pausecheck):
-		#debug
-		print "Processing " + str(self.queue.qsize()) + " items from queueu"
-		
 		while self.queue.qsize() > 0:
+			#debug
+			print "[Main]\t\tProcessing " + str(self.queue.qsize()) + " packets from queueu"
 
 			#extract a packet from the queue
 			pack = self.queue.get(0)
@@ -93,7 +95,7 @@ class _InterfaceGUI:
 				if pack.HexNetworkProtocol == 2048:
 					formatted_packet3 = "\tNetwork Protocol: " + str(pack.NetworkProtocol) + "\t\tSource IP: " + str(pack.NetworkHeader.SourceAddress) + "\t\tDestination IP: " + str(pack.NetworkHeader.DestinationAddress) + " \n"
 				elif pack.HexNetworkProtocol == 2054:
-					formatted_packet3 = "\tNetwork Protocol: " + str(pack.NetworkProtocol) + "\t\tSource IP: " + str(pack.NetworkHeader.SourceAddress) + "\t\tDestination IP: " + str(pack.NetworkHeader.DestinationAddress) + " \n"
+					formatted_packet3 = "\tNetwork Protocol: " + str(pack.NetworkProtocol) + "\t\tSource IP: " + str(pack.NetworkHeader.ProtocolAddressSender) + "\t\tDestination IP: " + str(pack.NetworkHeader.ProtocolAddressTarget) + " \n"
 				elif pack.HexNetworkProtocol == 34525:
 					formatted_packet3 = "\tNetwork Protocol: " + str(pack.NetworkProtocol) + "\t\tSource IP: " + str(pack.NetworkHeader.SourceAddress.Address) + "\t\tDestination IP: " + str(pack.NetworkHeader.DestinationAddress.Address) + " \n"
 				else:
@@ -124,31 +126,40 @@ class _InterfaceGUI:
 class _MasterThread:
 	#we launch the sub process and the main thread
 	def __init__(self, root):
+		#start value
+		self.running = 3
+		
+		#debug
+		print "[Main]\tStarting program"
+		
 		#use the root window we created
 		self.root = root
 
+		#debug
+		print "[Main]\t\tRoot window created."
+		
 		#Create the queue (FIFO, NOT LIFO)
 		#Queue size defaults to 0 --> Queue can grow infinitly
 		self.queue = Queue.Queue()
+		
+		#debug
+		print "[Main]\t\tQueue created."
 
 		#Set up the GUI
 		#we pass the queue to the GUI to update the text
 		self.gui = _InterfaceGUI(root, self.queue, self.start_packetsniffer, self.pause_packetsniffer, self.end_packetsniffer)
 		
-		#start value
-		self.running = 2
+		#debug
+		print "[Main]\t\tWidgets created."
 		
 		#create a socket with create_socket() from Capture-Packet
 		self.sock = create_socket()
 		
 		#debug
-		print "Socket created: " + str(self.sock)
+		print "[Main]\t\tSocket created: " + str(self.sock)
 		
 		#declare the packet
 		self.pack = None
-		
-		#debug
-		print "Packet created: " + str(self.pack)
 		
 		#create the actual thread
 		self.PacketSnifferThread = threading.Thread(target=self.packet_sniffer_thread)
@@ -157,24 +168,65 @@ class _MasterThread:
 		self.PacketSnifferThread.start()
 
 		#check if thread is running
-		print str(self.PacketSnifferThread.isAlive())
-
+		if self.PacketSnifferThread.isAlive() == True:
+			#debug
+			print "[Main]\t\tPacket sniffer thread running."
+			
 		#start the programloop
 		self.call_programloop()
 
-	def call_programloop(self):		
+	def call_programloop(self):	
 		#process queue, include pausechecker
 		#this function empties the queue
 		self.gui.process_queue(self.running)
 
 		#check exit condition
 		if self.running == 0:
-			#close the socket
-			#self.sock.close()
+			#create socket to end the recvfrom() function in extract packet() and connect --> "one last packet"
+			temposock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+			#debug
+			print "[Main]\tBreaking the packet sniffer loop..."
+			
+			#dont stop the program on a "connection refused" error, since we only need to send 1 packet
+			#random port 1111 chosen
+			try:
+				temposock.connect((socket.gethostname(), 1111))
+			except socket.error:
+				pass
 			
 			#debug
-			print "Exiting..."
+			print "[Main]\tClosing the sockets..."
 			
+			#close the temporary socket
+			temposock.close()
+			
+			#debug
+			print "[Main]\t\tTemporary socket closed."
+			
+			#close the temporary socket
+			self.sock.close()
+			
+			#debug
+			print "[Main]\t\tMain socket closed."
+			
+			#close the main socket
+			self.sock.close()
+			
+			#when the thread stops, we can exit
+			while self.PacketSnifferThread.isAlive() == True:
+				#debug
+				print "[Main]\tWaiting for packet sniffer thread to die..."
+				
+				#wait 1 second
+				sleep(1)
+			
+			#debug
+			print "[Main]\t\tThread stopped."
+			
+			#debug
+			print "[Main]\tExiting program..."
+
 			#exit the program
 			sys.exit()
 		
@@ -184,67 +236,64 @@ class _MasterThread:
 
 	def packet_sniffer_thread(self):
 		#debug
-		print str(self.running)
-
+		print "[PSnif]\t\tPacket sniffer thread created."
+		
 		while True:			
 			#run the program until stop/pause
-			#exit the wile loop when stopping the program & close thread
-			if self.running == 0:
-				#close the socket
-				self.sock.close()
-				
-				#debug
-				print "Exiting subprocess..."
-				
-				#exit the program
-				break
-
 			while self.running == 1:
-				#exit the wile loop when stopping the program & close thread
-				if self.running == 0:
-					#close the socket
-					self.sock.close()
-					
-					#debug
-					print "Exiting subprocess..."
-					
-					#exit the program
-					break
 				#extract a packet from the socket
+				#program waits for the socket to return a packet
+				#if no packet is received while shutting down, the program cannot fully exit
 				self.pack = extract_packet(self.sock)
-
-				#debug
-				print str(self.pack.Length)
-				
 				#add the packet object to the queue
 				self.queue.put(self.pack)
+
+				#debug
+				print "[PSnif]\t\tPacket added to queue."
+
+			#exit the wile loop when stopping the program & close thread
+			if self.running == 0:
+				#debug
+				print "[PSnif]\t\tLoop interrupted."
 				
 				#debug
-				print "Packet added to queue"
-			
+				print "[PSnif]\tExiting..."
+				
+				#exit the program loop
+				break
+		
+		#debug
+		print "[PSnif]\t\tExited."
+		
+		#debug
+		print "[Psnif]\tReturning..."
+		
+		#kill the thread
+		return
 
 	def start_packetsniffer(self):
 		self.running = 1
 		
 		#debug
-		print "Start button pressed"
+		print "[Main]\tStart button pressed."
 	
 	def pause_packetsniffer(self):
 		self.running = 2
 		
 		#debug
-		print "Pause button pressed"
+		print "[Main]\tPause button pressed."
 		
 	def end_packetsniffer(self):
 		self.running = 0
-		
-		#debug
-		print "Stop button pressed"
 
+		#debug
+		print "[Main]\tStop button pressed."
+    
+		
 #create root frame
 root = Tk()
 
 #set up main thread and packet sniffer thread
-ps_thread = _MasterThread(root)
+main_thread = _MasterThread(root)
 
 root.mainloop()
