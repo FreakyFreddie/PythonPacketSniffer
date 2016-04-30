@@ -17,6 +17,10 @@ import csv
 #Date library - needed for the errorlog
 from datetime import datetime
 
+#interruptclass
+class _InterruptThread(Exception):
+	pass
+
 #Creating a socket to capture all packets
 def create_socket():
 	#errorhandling
@@ -31,7 +35,7 @@ def create_socket():
 	except socket.error, errormsg:
 		#writing error message to log file
 		errorlog = open('errorlog.txt', 'a')
-		errorlog.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' Socket creation failed. Code: ' + str(msg[0]) + 'Message ' + msg[1] + '\n')
+		errorlog.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' Socket creation failed. Code: ' + str(errormsg[0]) + 'Message ' + errormsg[1] + '\n')
 		errorlog.close
 		sys.exit()
 
@@ -41,10 +45,13 @@ def extract_packet(sock):
 
 	#returns packet in hex from socket with bufsize 65565
 	#returns packet as string
-	packet = sock.recvfrom(65565)
+	try:
+		packet = sock.recvfrom(65565)
+	except _InterruptThread:
+		return
 
 	#debug
-	print packet
+	#print packet
 
 	#create Packet object
 	PacketClass = _Packet(packet[0])
@@ -723,14 +730,14 @@ def extract_ICMPheader(packet, previous_length):
 	return ICMPClass
         
 #actual program code
-sock = create_socket()
-while True:
-	pack = extract_packet(sock)
+#sock = create_socket()
+#while True:
+	#pack = extract_packet(sock)
 	#pack.Length etc. to get values
 
-	print str(pack.Length)
-	print str(pack.DataLinkHeader.SourceMAC)
-	print str(pack.DataLinkHeader.DestinationMAC)
-	print str(pack.NetworkProtocol)
-	if pack.NetworkHeader.Protocol != None:
-		print str(pack.TransportProtocol)
+	#print str(pack.Length)
+	#print str(pack.DataLinkHeader.SourceMAC)
+	#print str(pack.DataLinkHeader.DestinationMAC)
+	#print str(pack.NetworkProtocol)
+	#if pack.NetworkHeader.Protocol != None:
+		#print str(pack.TransportProtocol)
