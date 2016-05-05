@@ -80,7 +80,7 @@ class _InterfaceGUI:
 	def process_queue(self, pausecheck):
 		while self.queue.qsize() > 0:
 			#debug
-			print "[Main]\t\tProcessing " + str(self.queue.qsize()) + " packets from queueu"
+			print "[Main]\t\tProcessing " + str(self.queue.qsize()) + " packets from queue"
 
 			#extract a packet from the queue
 			pack = self.queue.get(0)
@@ -129,14 +129,8 @@ class _MasterThread:
 		#start value
 		self.running = 3
 		
-		#debug
-		print "[Main]\tStarting program"
-		
 		#use the root window we created
 		self.root = root
-
-		#debug
-		print "[Main]\t\tRoot window created."
 		
 		#Create the queue (FIFO, NOT LIFO)
 		#Queue size defaults to 0 --> Queue can grow infinitly
@@ -145,7 +139,7 @@ class _MasterThread:
 		#debug
 		print "[Main]\t\tQueue created."
 
-		#Set up the GUI
+		#Set up the GUI (populate with buttons etc.)
 		#we pass the queue to the GUI to update the text
 		self.gui = _InterfaceGUI(root, self.queue, self.start_packetsniffer, self.pause_packetsniffer, self.end_packetsniffer)
 		
@@ -167,7 +161,7 @@ class _MasterThread:
 		#launch the thread
 		self.PacketSnifferThread.start()
 
-		#check if thread is running
+		#debug check if thread is running
 		if self.PacketSnifferThread.isAlive() == True:
 			#debug
 			print "[Main]\t\tPacket sniffer thread running."
@@ -289,9 +283,20 @@ class _MasterThread:
 		#debug
 		print "[Main]\tStop button pressed."
     
-		
+#debug
+print "[Main]\tStarting program..."
+	
 #create root frame
 root = Tk()
+
+#give root window a title
+root.title("Python Packet Sniffer")
+
+#debug
+print "[Main]\t\tRoot window created."
+
+#debug
+print "[Main]\tStarting main thread..."
 
 #set up main thread and packet sniffer thread
 main_thread = _MasterThread(root)
