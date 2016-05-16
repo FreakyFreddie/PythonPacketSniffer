@@ -76,7 +76,7 @@ class _Packet:
 		self.DataLinkHeader = extract_ethernetheader(self.Content)
 		
 		#Network layer Protocol in hex (int)
-			self.HexNetworkProtocol = self.DataLinkHeader.Protocol
+		self.HexNetworkProtocol = self.DataLinkHeader.Protocol
 		
 		if self.DataLinkHeader.Protocol != None:
 			#Network layer Protocol in readable text
