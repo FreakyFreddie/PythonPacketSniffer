@@ -317,8 +317,8 @@ def extract_networkheader(packet, datalink_protocol, datalink_length):
 		NetwClass = extract_IPv6header(packet, datalink_length)
 		return NetwClass
 	else:
-		NetwClass = 'Network protocol not supported.'
-		return NetwClass
+		print 'Network protocol ' + datalink_protocol + ' not supported.'
+		return
 
 #Network Layer Protocols
 def extract_IPv4header(packet, datalink_length):
@@ -607,8 +607,8 @@ def extract_transportheader(packet, network_protocol, datalink_length, network_l
 		TranClass = extract_ICMPheader(packet, combi_length)
 		return TranClass
 	else:
-		TranClass = 'Transport protcol not supported.'
-		return TranClass
+		print 'Transport protocol ' + network_protocol + ' not supported.'
+		return
 
 #Transport Layer Protocols
 def extract_TCPheader(packet, previous_length):
