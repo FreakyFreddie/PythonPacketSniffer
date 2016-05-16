@@ -75,25 +75,27 @@ class _Packet:
 		#extract header from Data Link Layer (OSI)
 		self.DataLinkHeader = extract_ethernetheader(self.Content)
 		
-		#Network layer Protocol in hex (int)
-		self.HexNetworkProtocol = self.DataLinkHeader.Protocol
-		
-		if self.DataLinkHeader.Protocol != None:
-			#Network layer Protocol in readable text
-			self.NetworkProtocol = convert_networkprotocol(self.HexNetworkProtocol)
-		
-			#extract network layer header based on DataLink protocol
-			self.NetworkHeader = extract_networkheader(self.Content, self.DataLinkHeader.Protocol, self.DataLinkHeader.Length)
-			
-			#Transport layer protocol in hex (int)
-			self.HexTransportProtocol = self.NetworkHeader.Protocol
+		if self.DataLinkHeader != None:
+			#Network layer Protocol in hex (int)
+			self.HexNetworkProtocol = self.DataLinkHeader.Protocol
 
-			if self.NetworkHeader.Protocol != None:				
-				#convert transport layer protocol to readable text
-				self.TransportProtocol = convert_transportprotocol(self.HexTransportProtocol)
-				
-				#extract transport layer header
-				self.TransportHeader = extract_transportheader(self.Content, self.NetworkHeader.Protocol, self.DataLinkHeader.Length, self.NetworkHeader.Length)
+			if self.DataLinkHeader.Protocol != None:
+				#Network layer Protocol in readable text
+				self.NetworkProtocol = convert_networkprotocol(self.HexNetworkProtocol)
+
+				#extract network layer header based on DataLink protocol
+				self.NetworkHeader = extract_networkheader(self.Content, self.DataLinkHeader.Protocol, self.DataLinkHeader.Length)
+
+				if self.NetworkHeader != None:
+					#Transport layer protocol in hex (int)
+					self.HexTransportProtocol = self.NetworkHeader.Protocol
+
+					if self.NetworkHeader.Protocol != None:				
+						#convert transport layer protocol to readable text
+						self.TransportProtocol = convert_transportprotocol(self.HexTransportProtocol)
+						
+						#extract transport layer header
+						self.TransportHeader = extract_transportheader(self.Content, self.NetworkHeader.Protocol, self.DataLinkHeader.Length, self.NetworkHeader.Length)
 		
 class _EthernetHeader: 
 	def __init__(self):
