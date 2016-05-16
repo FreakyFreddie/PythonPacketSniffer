@@ -85,15 +85,15 @@ class _Packet:
 			#extract network layer header based on DataLink protocol
 			self.NetworkHeader = extract_networkheader(self.Content, self.DataLinkHeader.Protocol, self.DataLinkHeader.Length)
 		
-		if self.NetworkHeader.Protocol != None:
-			#Transport layer protocol in hex (int)
-			self.HexTransportProtocol = self.NetworkHeader.Protocol
-			
-			#convert transport layer protocol to readable text
-			self.TransportProtocol = convert_transportprotocol(self.HexTransportProtocol)
-			
-			#extract transport layer header
-			self.TransportHeader = extract_transportheader(self.Content, self.NetworkHeader.Protocol, self.DataLinkHeader.Length, self.NetworkHeader.Length)
+			if self.NetworkHeader.Protocol != None:
+				#Transport layer protocol in hex (int)
+				self.HexTransportProtocol = self.NetworkHeader.Protocol
+				
+				#convert transport layer protocol to readable text
+				self.TransportProtocol = convert_transportprotocol(self.HexTransportProtocol)
+				
+				#extract transport layer header
+				self.TransportHeader = extract_transportheader(self.Content, self.NetworkHeader.Protocol, self.DataLinkHeader.Length, self.NetworkHeader.Length)
 		
 class _EthernetHeader: 
 	def __init__(self):
