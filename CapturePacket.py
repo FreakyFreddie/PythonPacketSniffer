@@ -75,20 +75,20 @@ class _Packet:
 		#extract header from Data Link Layer (OSI)
 		self.DataLinkHeader = extract_ethernetheader(self.Content)
 		
-		if self.DataLinkHeader.Protocol != None:
-			#Network layer Protocol in hex (int)
+		#Network layer Protocol in hex (int)
 			self.HexNetworkProtocol = self.DataLinkHeader.Protocol
-			
+		
+		if self.DataLinkHeader.Protocol != None:
 			#Network layer Protocol in readable text
 			self.NetworkProtocol = convert_networkprotocol(self.HexNetworkProtocol)
 		
 			#extract network layer header based on DataLink protocol
 			self.NetworkHeader = extract_networkheader(self.Content, self.DataLinkHeader.Protocol, self.DataLinkHeader.Length)
-		
-			if self.NetworkHeader.Protocol != None:
-				#Transport layer protocol in hex (int)
-				self.HexTransportProtocol = self.NetworkHeader.Protocol
-				
+			
+			#Transport layer protocol in hex (int)
+			self.HexTransportProtocol = self.NetworkHeader.Protocol
+
+			if self.NetworkHeader.Protocol != None:				
 				#convert transport layer protocol to readable text
 				self.TransportProtocol = convert_transportprotocol(self.HexTransportProtocol)
 				
